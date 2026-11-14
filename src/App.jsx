@@ -17,6 +17,7 @@ import {
   resetAllToDefaults
 } from './services/syncService';
 import { normalizeItem } from './data/seedItems';
+import { ShoppingCart, Shirt, Users, Sparkles, TrendingUp } from 'lucide-react';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dmart'); // 'dmart' | 'clothing' | 'tasks'
@@ -189,7 +190,7 @@ export default function App() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `smartcart-spec-backup-${new Date().toISOString().split('T')[0]}.json`;
+    link.download = `smartcart-backup-${new Date().toISOString().split('T')[0]}.json`;
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -217,8 +218,22 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-mesh-pattern flex flex-col font-sans selection:bg-emerald-500 selection:text-white">
-      {/* Frosted Header with Navigation and Sync Status */}
+    <div className="relative min-h-screen flex flex-col font-sans selection:bg-emerald-500 selection:text-white">
+      {/* 🌈 RADIANT AMBIENT GLOW ORBS (Provides the vibrant backdrop for Glassmorphism) */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+        {/* Emerald Glow Top-Left */}
+        <div className="absolute -top-32 -left-32 w-[34rem] h-[34rem] bg-emerald-400/30 rounded-full blur-[100px] animate-pulse-slow"></div>
+        {/* Indigo Glow Top-Right */}
+        <div className="absolute top-10 -right-28 w-[32rem] h-[32rem] bg-indigo-500/25 rounded-full blur-[110px] animate-float"></div>
+        {/* Rose Glow Center-Right */}
+        <div className="absolute top-[40%] right-[10%] w-[28rem] h-[28rem] bg-pink-400/20 rounded-full blur-[100px]"></div>
+        {/* Amber / Yellow Glow Bottom-Left */}
+        <div className="absolute bottom-10 left-[15%] w-[30rem] h-[30rem] bg-amber-400/20 rounded-full blur-[100px] animate-pulse-slow"></div>
+        {/* Teal Glow Bottom-Right */}
+        <div className="absolute -bottom-20 -right-20 w-[28rem] h-[28rem] bg-teal-400/25 rounded-full blur-[90px]"></div>
+      </div>
+
+      {/* Frosted Glass Header */}
       <Header
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -241,8 +256,99 @@ export default function App() {
         className="hidden"
       />
 
-      {/* Main Container with Glassmorphism Theme */}
-      <main className="flex-1 max-w-6xl w-full mx-auto px-3 sm:px-4 pt-5">
+      {/* Main Glassmorphic Container */}
+      <main className="flex-1 max-w-6xl w-full mx-auto px-3 sm:px-4 pt-5 pb-8">
+        {/* 🌟 Stylish Landing Page Hub Overview Hero Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
+          {/* Card 1: Groceries */}
+          <button
+            onClick={() => setActiveTab('dmart')}
+            className={`glass-card glass-card-hover rounded-2xl p-4 text-left transition-all relative overflow-hidden group ${
+              activeTab === 'dmart' ? 'ring-2 ring-emerald-500/60 shadow-lg glow-emerald' : ''
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <span className="p-2.5 rounded-xl bg-emerald-500/15 text-emerald-700">
+                <ShoppingCart className="w-5 h-5" />
+              </span>
+              <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                {itemsCount.pending} To Buy
+              </span>
+            </div>
+            <h3 className="text-base font-extrabold text-slate-800 mt-2.5 group-hover:text-emerald-700 transition">
+              DMart Grocery Cart
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              1st &amp; 2nd Floor staples, spices &amp; household
+            </p>
+            <div className="mt-3 flex items-center justify-between text-xs font-bold text-emerald-700">
+              <span>{itemsCount.completed} / {itemsCount.total} Picked</span>
+              <span className="text-[11px] opacity-75">
+                {itemsCount.total > 0 ? Math.round((itemsCount.completed / itemsCount.total) * 100) : 0}%
+              </span>
+            </div>
+          </button>
+
+          {/* Card 2: Dressing */}
+          <button
+            onClick={() => setActiveTab('clothing')}
+            className={`glass-card glass-card-hover rounded-2xl p-4 text-left transition-all relative overflow-hidden group ${
+              activeTab === 'clothing' ? 'ring-2 ring-pink-500/60 shadow-lg glow-pink' : ''
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <span className="p-2.5 rounded-xl bg-pink-500/15 text-pink-700">
+                <Shirt className="w-5 h-5" />
+              </span>
+              <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-pink-100 text-pink-800">
+                {clothingCount.pending} In Cart
+              </span>
+            </div>
+            <h3 className="text-base font-extrabold text-slate-800 mt-2.5 group-hover:text-pink-700 transition">
+              Dressing &amp; Apparel Cart
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Sizes, colors &amp; trial room fitting status
+            </p>
+            <div className="mt-3 flex items-center justify-between text-xs font-bold text-pink-700">
+              <span>{clothingCount.purchased} / {clothingCount.total} Bought</span>
+              <span className="text-[11px] opacity-75">
+                {clothingCount.total > 0 ? Math.round((clothingCount.purchased / clothingCount.total) * 100) : 0}%
+              </span>
+            </div>
+          </button>
+
+          {/* Card 3: Group Tasks */}
+          <button
+            onClick={() => setActiveTab('tasks')}
+            className={`glass-card glass-card-hover rounded-2xl p-4 text-left transition-all relative overflow-hidden group ${
+              activeTab === 'tasks' ? 'ring-2 ring-indigo-500/60 shadow-lg glow-indigo' : ''
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <span className="p-2.5 rounded-xl bg-indigo-500/15 text-indigo-700">
+                <Users className="w-5 h-5" />
+              </span>
+              <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800">
+                {tasksCount.pending} Open
+              </span>
+            </div>
+            <h3 className="text-base font-extrabold text-slate-800 mt-2.5 group-hover:text-indigo-700 transition">
+              Group Action &amp; Tasks
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Assigned follow-ups, price checks &amp; billing
+            </p>
+            <div className="mt-3 flex items-center justify-between text-xs font-bold text-indigo-700">
+              <span>{teamMembers.length} Collaborators</span>
+              <span className="text-[11px] opacity-75">
+                {tasksCount.total - tasksCount.pending} Done
+              </span>
+            </div>
+          </button>
+        </div>
+
+        {/* Tab Views */}
         {activeTab === 'dmart' && (
           <DmartList
             items={items}
