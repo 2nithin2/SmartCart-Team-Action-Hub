@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Check, Shirt, User, Tag, Palette, DollarSign, FileText } from 'lucide-react';
+import { haptics } from '../utils/haptics';
 
 const SECTIONS = [
   "Men's Wear",
@@ -52,13 +53,13 @@ export default function ClothingModal({
         setCustomSize(itemToEdit.size || '');
       }
       setColor(itemToEdit.color || '');
-      setQty(itemToEdit.qty?.toString() || '1');
+      setQty(itemToEdit.qty?.toString() || itemToEdit.quantity?.toString() || '1');
       setUnit(itemToEdit.unit || 'pcs');
       setBrand(itemToEdit.brand || '');
-      setAssignedTo(itemToEdit.assignedTo || '');
+      setAssignedTo(itemToEdit.assignedTo || itemToEdit.assignee || '');
       setTrialStatus(itemToEdit.trialStatus || 'pending_trial');
       setPriceEstimate(itemToEdit.priceEstimate || '');
-      setNotes(itemToEdit.notes || '');
+      setNotes(itemToEdit.notes || itemToEdit.note || '');
     } else {
       setName('');
       setSection("Men's Wear");
@@ -69,7 +70,7 @@ export default function ClothingModal({
       setQty('1');
       setUnit('pcs');
       setBrand('');
-      setAssignedTo(teamMembers[0] || '');
+      setAssignedTo(teamMembers[0] || 'Unassigned');
       setTrialStatus('pending_trial');
       setPriceEstimate('');
       setNotes('');
@@ -82,23 +83,29 @@ export default function ClothingModal({
     e.preventDefault();
     if (!name.trim()) return;
 
+    haptics.success();
     const finalSize = size === 'custom' ? (customSize.trim() || 'Standard') : size;
 
     const clothingData = {
-      id: itemToEdit?.id || `cl-${Date.now()}`,
+      id: itemToEdit?.id || itemToEdit?.itemId || `cl-${Date.now()}`,
+      itemId: itemToEdit?.id || itemToEdit?.itemId || `cl-${Date.now()}`,
       name: name.trim(),
       section,
       category: category.trim() || 'General Apparel',
       size: finalSize,
+      sizeSpec: finalSize,
       color: color.trim(),
-      qty: qty.trim() || '1',
+      qty: parseFloat(qty) || 1,
+      quantity: parseFloat(qty) || 1,
       unit: unit.trim() || 'pcs',
       brand: brand.trim(),
-      assignedTo: assignedTo.trim(),
+      assignedTo: assignedTo.trim() || 'Unassigned',
+      assignee: assignedTo.trim() || 'Unassigned',
       trialStatus,
       status: trialStatus === 'purchased' ? 'completed' : 'pending',
       priceEstimate: priceEstimate.trim(),
       notes: notes.trim(),
+      note: notes.trim(),
       updatedAt: new Date().toISOString()
     };
 
@@ -107,43 +114,47 @@ export default function ClothingModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-fadeIn">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto border border-slate-200">
-        <div className="flex items-center justify-between p-4 border-b border-slate-100 bg-slate-50 rounded-t-2xl">
-          <div className="flex items-center gap-2">
-            <div className="p-2 bg-pink-100 text-pink-700 rounded-lg">
-              <Shirt className="w-5 h-5" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fadeIn">
+      <div className="dark-glass-card bg-slate-900/95 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto border border-pink-500/40 text-white">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-pink-500/20 bg-slate-950/60 rounded-t-2xl">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 bg-pink-500/20 text-pink-300 rounded-xl border border-pink-500/40">
+              <Shirt className="w-5 h-5 text-pink-400" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-800">
+              <h2 className="text-lg font-extrabold text-white">
                 {itemToEdit ? 'Edit Clothing Item' : 'Add Clothing / Dress Item'}
               </h2>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-pink-200/70 font-medium">
                 Specify sizes (S/M/L/XL/waist), colors, trial status, and assignee
               </p>
             </div>
           </div>
           <button
-            onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-200 transition"
+            onClick={() => {
+              haptics.tick();
+              onClose();
+            }}
+            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
-          {/* Dress / Item Name */}
+          {/* Item Name */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+            <label className="block text-xs font-bold text-pink-300 uppercase tracking-wider mb-1">
               Clothing Item Name *
             </label>
             <input
               type="text"
               required
-              placeholder="e.g. Formal Cotton Shirt, Stretch Denim Jeans, Anarkali Kurti..."
+              placeholder="e.g. Linen Slim Fit Shirt, Embroidered Kurti, Cotton T-Shirt..."
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm font-medium"
+              className="dark-glass-input w-full px-3.5 py-2.5 rounded-xl text-sm font-semibold focus:outline-none"
               autoFocus
             />
           </div>
@@ -151,30 +162,32 @@ export default function ClothingModal({
           {/* Section & Category */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                Section / Department
+              <label className="block text-xs font-bold text-pink-300 uppercase tracking-wider mb-1">
+                Section *
               </label>
               <select
                 value={section}
                 onChange={(e) => setSection(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm bg-white"
+                className="dark-glass-input w-full px-3 py-2 rounded-xl text-sm font-semibold focus:outline-none"
               >
-                {SECTIONS.map((sec) => (
-                  <option key={sec} value={sec}>{sec}</option>
+                {SECTIONS.map((s) => (
+                  <option key={s} value={s} className="bg-slate-900 text-white">
+                    {s}
+                  </option>
                 ))}
               </select>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                Category / Type
+              <label className="block text-xs font-bold text-pink-300 uppercase tracking-wider mb-1">
+                Category
               </label>
               <input
                 type="text"
-                placeholder="e.g. Shirts, Jeans, Kurtis, Shoes"
+                placeholder="e.g. Shirts, Jeans, Sarees..."
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm"
+                className="dark-glass-input w-full px-3 py-2 rounded-xl text-sm focus:outline-none"
               />
             </div>
           </div>
@@ -182,167 +195,192 @@ export default function ClothingModal({
           {/* Size & Color */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                Size *
+              <label className="block text-xs font-bold text-pink-300 uppercase tracking-wider mb-1 flex items-center gap-1">
+                <Tag className="w-3.5 h-3.5 text-pink-400" />
+                <span>Size</span>
               </label>
               <select
                 value={size}
                 onChange={(e) => setSize(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm bg-white font-medium"
+                className="dark-glass-input w-full px-3 py-2 rounded-xl text-sm font-bold focus:outline-none"
               >
-                {STANDARD_SIZES.map((sz) => (
-                  <option key={sz} value={sz}>{sz}</option>
+                {STANDARD_SIZES.map((s) => (
+                  <option key={s} value={s} className="bg-slate-900 text-white">
+                    {s}
+                  </option>
                 ))}
-                <option value="custom">-- Custom Size --</option>
+                <option value="custom" className="bg-slate-900 text-white">Other / Custom Size...</option>
               </select>
               {size === 'custom' && (
                 <input
                   type="text"
-                  placeholder="Type custom size (e.g. 38 Slim Fit, 32/34)"
+                  placeholder="Type custom size (e.g. 34W/32L)"
                   value={customSize}
                   onChange={(e) => setCustomSize(e.target.value)}
-                  className="mt-1.5 w-full px-3 py-1.5 text-xs rounded-lg border border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                  className="dark-glass-input w-full px-3 py-1.5 mt-1.5 rounded-xl text-xs font-bold"
                 />
               )}
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1 flex items-center gap-1">
-                <Palette className="w-3.5 h-3.5 text-slate-400" />
+              <label className="block text-xs font-bold text-pink-300 uppercase tracking-wider mb-1 flex items-center gap-1">
+                <Palette className="w-3.5 h-3.5 text-pink-400" />
                 <span>Color / Pattern</span>
               </label>
               <input
                 type="text"
-                placeholder="e.g. Navy Blue, Maroon, Printed"
+                placeholder="e.g. Navy Blue, Maroon..."
                 value={color}
                 onChange={(e) => setColor(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm"
+                className="dark-glass-input w-full px-3 py-2 rounded-xl text-sm focus:outline-none"
               />
             </div>
           </div>
 
-          {/* Qty (Pcs) & Brand */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* Qty, Unit, Brand */}
+          <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                Quantity (Pcs)
+              <label className="block text-xs font-bold text-pink-300 uppercase tracking-wider mb-1">
+                Qty
               </label>
-              <div className="flex gap-1.5">
-                <input
-                  type="text"
-                  value={qty}
-                  onChange={(e) => setQty(e.target.value)}
-                  className="w-20 px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm"
-                />
-                <select
-                  value={unit}
-                  onChange={(e) => setUnit(e.target.value)}
-                  className="flex-1 px-2.5 py-2 rounded-lg border border-slate-300 bg-white text-sm"
-                >
-                  <option value="pcs">pcs</option>
-                  <option value="pair">pair</option>
-                  <option value="set">set</option>
-                  <option value="bundle">bundle</option>
-                </select>
-              </div>
+              <input
+                type="number"
+                min="1"
+                value={qty}
+                onChange={(e) => setQty(e.target.value)}
+                className="dark-glass-input w-full px-3 py-2 rounded-xl text-sm font-bold focus:outline-none text-center"
+              />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                Brand / Store
+              <label className="block text-xs font-bold text-pink-300 uppercase tracking-wider mb-1">
+                Unit
+              </label>
+              <select
+                value={unit}
+                onChange={(e) => setUnit(e.target.value)}
+                className="dark-glass-input w-full px-3 py-2 rounded-xl text-sm font-semibold focus:outline-none"
+              >
+                <option value="pcs" className="bg-slate-900 text-white">pcs</option>
+                <option value="pair" className="bg-slate-900 text-white">pair</option>
+                <option value="set" className="bg-slate-900 text-white">set</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-pink-300 uppercase tracking-wider mb-1">
+                Brand (Optional)
               </label>
               <input
                 type="text"
-                placeholder="e.g. Allen Solly, Max, Zudio"
+                placeholder="e.g. Allen Solly"
                 value={brand}
                 onChange={(e) => setBrand(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm"
+                className="dark-glass-input w-full px-3 py-2 rounded-xl text-sm focus:outline-none"
               />
             </div>
           </div>
 
-          {/* Person (Who this is for) & Trial Status */}
+          {/* Assignee & Price Estimate */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1 flex items-center gap-1">
-                <User className="w-3.5 h-3.5 text-slate-400" />
-                <span>For Person *</span>
+              <label className="block text-xs font-bold text-pink-300 uppercase tracking-wider mb-1 flex items-center gap-1">
+                <User className="w-3.5 h-3.5 text-pink-400" />
+                <span>For Person</span>
               </label>
               <select
                 value={assignedTo}
                 onChange={(e) => setAssignedTo(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm bg-white font-medium"
+                className="dark-glass-input w-full px-3 py-2 rounded-xl text-sm font-semibold focus:outline-none"
               >
-                <option value="">-- Choose Person --</option>
+                <option value="Unassigned" className="bg-slate-900 text-white">-- Unassigned --</option>
                 {teamMembers.map((m) => (
-                  <option key={m} value={m}>👤 {m}</option>
+                  <option key={m} value={m} className="bg-slate-900 text-white">
+                    👤 {m}
+                  </option>
                 ))}
               </select>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                Trial / Cart Status
-              </label>
-              <select
-                value={trialStatus}
-                onChange={(e) => setTrialStatus(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm bg-white font-medium"
-              >
-                <option value="pending_trial">⏳ Needs Trial / Fitting</option>
-                <option value="fitting_checked">👍 Fitting Checked &amp; OK</option>
-                <option value="in_cart">🛒 In Cart (To Buy)</option>
-                <option value="purchased">✅ Purchased</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Price Estimate & Notes */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1 flex items-center gap-1">
-                <DollarSign className="w-3.5 h-3.5 text-slate-400" />
-                <span>Price / Budget</span>
+              <label className="block text-xs font-bold text-pink-300 uppercase tracking-wider mb-1 flex items-center gap-1">
+                <DollarSign className="w-3.5 h-3.5 text-pink-400" />
+                <span>Estimated Price</span>
               </label>
               <input
                 type="text"
-                placeholder="e.g. ₹1,499"
+                placeholder="e.g. ₹999 or Under ₹1500"
                 value={priceEstimate}
                 onChange={(e) => setPriceEstimate(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1 flex items-center gap-1">
-                <FileText className="w-3.5 h-3.5 text-slate-400" />
-                <span>Notes</span>
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. Cotton fabric, round neck"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm"
+                className="dark-glass-input w-full px-3 py-2 rounded-xl text-sm focus:outline-none"
               />
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
+          {/* Trial Status */}
+          <div>
+            <label className="block text-xs font-bold text-pink-300 uppercase tracking-wider mb-1.5">
+              Trial Room / Purchase Status
+            </label>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-bold">
+              {[
+                { id: 'pending_trial', label: '⏳ Trial Room' },
+                { id: 'fitting_checked', label: '👍 Fitting OK' },
+                { id: 'in_cart', label: '🛒 In Cart' },
+                { id: 'purchased', label: '✅ Purchased' }
+              ].map((st) => (
+                <button
+                  key={st.id}
+                  type="button"
+                  onClick={() => {
+                    haptics.selection();
+                    setTrialStatus(st.id);
+                  }}
+                  className={`p-2 rounded-xl border text-center transition ${
+                    trialStatus === st.id
+                      ? 'bg-pink-600 text-white border-pink-400 shadow-md shadow-pink-900/40'
+                      : 'dark-glass-input text-pink-200 hover:text-white'
+                  }`}
+                >
+                  {st.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Notes */}
+          <div>
+            <label className="block text-xs font-bold text-pink-300 uppercase tracking-wider mb-1 flex items-center gap-1">
+              <FileText className="w-3.5 h-3.5 text-pink-400" />
+              <span>Notes / Sizing Details</span>
+            </label>
+            <textarea
+              rows={2}
+              placeholder="e.g. Check shoulder fit, prefer dark shade, try size 32 if 30 feels tight..."
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="dark-glass-input w-full px-3 py-2 rounded-xl text-sm focus:outline-none resize-none"
+            />
+          </div>
+
+          {/* Modal Actions */}
+          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-pink-500/20">
             <button
               type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition"
+              onClick={() => {
+                haptics.tick();
+                onClose();
+              }}
+              className="px-4 py-2 text-sm font-bold text-slate-300 hover:text-white hover:bg-slate-800 rounded-xl transition"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex items-center gap-1.5 px-5 py-2 text-sm font-semibold text-white bg-pink-600 hover:bg-pink-700 rounded-lg shadow-xs transition"
+              className="flex items-center gap-1.5 px-5 py-2 text-sm font-bold text-white bg-linear-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 rounded-xl shadow-lg shadow-pink-900/40 transition hover-wiggle"
             >
               <Check className="w-4 h-4" />
-              <span>{itemToEdit ? 'Save Dress Details' : 'Add to Clothing Cart'}</span>
+              <span>{itemToEdit ? 'Save Changes' : 'Add Clothing Item'}</span>
             </button>
           </div>
         </form>
@@ -350,4 +388,3 @@ export default function ClothingModal({
     </div>
   );
 }
-
