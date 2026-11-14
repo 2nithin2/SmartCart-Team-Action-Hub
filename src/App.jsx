@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Header from './components/Header';
 import DmartList from './components/DmartList';
+import ClothingList from './components/ClothingList';
 import GroupTasks from './components/GroupTasks';
 import ItemModal from './components/ItemModal';
+import ClothingModal from './components/ClothingModal';
 import CloudSyncModal from './components/CloudSyncModal';
 import { 
   subscribeToSync, 
   syncSaveItems, 
+  syncSaveClothing,
   syncSaveTasks, 
   syncSaveMembers,
   exportAllData,
@@ -15,8 +18,9 @@ import {
 } from './services/syncService';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('dmart'); // 'dmart' | 'tasks'
+  const [activeTab, setActiveTab] = useState('dmart'); // 'dmart' | 'clothing' | 'tasks'
   const [items, setItems] = useState([]);
+  const [clothingItems, setClothingItems] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [teamMembers, setTeamMembers] = useState([]);
   const [connectionStatus, setConnectionStatus] = useState({
@@ -25,8 +29,15 @@ export default function App() {
     message: 'Initializing...'
   });
 
+  // Grocery Item Modal
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
   const [itemToEdit, setItemToEdit] = useState(null);
+
+  // Clothing Modal
+  const [isClothingModalOpen, setIsClothingModalOpen] = useState(false);
+  const [clothingToEdit, setClothingToEdit] = useState(null);
+
+  // Cloud Sync Modal
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
 
   // Hidden file input for importing backup JSON
@@ -39,6 +50,9 @@ export default function App() {
     const unsubscribe = subscribeToSync({
       onItemsChange: (newItems) => {
         setItems(newItems);
+      },
+      onClothingChange: (newClothing) => {
+        setClothingItems(newClothing);
       },
       onTasksChange: (newTasks) => {
         setTasks(newTasks);
@@ -56,7 +70,7 @@ export default function App() {
     };
   }, [syncKey]);
 
-  // Compute existing floors
+  // Compute existing grocery floors
   const existingFloors = React.useMemo(() => {
     const set = new Set(['1st Floor', '2nd Floor']);
     items.forEach((i) => {
@@ -73,6 +87,14 @@ export default function App() {
     return { total, completed, pending };
   }, [items]);
 
+  // Clothing stats
+  const clothingCount = React.useMemo(() => {
+    const total = clothingItems.length;
+    const purchased = clothingItems.filter((c) => c.trialStatus === 'purchased').length;
+    const pending = total - purchased;
+    return { total, purchased, pending };
+  }, [clothingItems]);
+
   // Tasks stats
   const tasksCount = React.useMemo(() => {
     const total = tasks.length;
@@ -80,7 +102,7 @@ export default function App() {
     return { total, pending };
   }, [tasks]);
 
-  // Item handlers
+  // Grocery Handlers
   const handleAddItem = async (newItem) => {
     const updated = [newItem, ...items];
     setItems(updated);
@@ -99,7 +121,26 @@ export default function App() {
     await syncSaveItems(updated);
   };
 
-  // Task handlers
+  // Clothing Handlers
+  const handleAddClothing = async (newClothing) => {
+    const updated = [newClothing, ...clothingItems];
+    setClothingItems(updated);
+    await syncSaveClothing(updated);
+  };
+
+  const handleUpdateClothing = async (updatedClothing) => {
+    const updated = clothingItems.map((c) => (c.id === updatedClothing.id ? updatedClothing : c));
+    setClothingItems(updated);
+    await syncSaveClothing(updated);
+  };
+
+  const handleDeleteClothing = async (clothingId) => {
+    const updated = clothingItems.filter((c) => c.id !== clothingId);
+    setClothingItems(updated);
+    await syncSaveClothing(updated);
+  };
+
+  // Task Handlers
   const handleAddTask = async (newTask) => {
     const updated = [newTask, ...tasks];
     setTasks(updated);
@@ -118,7 +159,7 @@ export default function App() {
     await syncSaveTasks(updated);
   };
 
-  // Member handlers
+  // Member Handlers
   const handleAddMember = async (name) => {
     if (!name || teamMembers.includes(name)) return;
     const updated = [...teamMembers, name];
@@ -126,9 +167,9 @@ export default function App() {
     await syncSaveMembers(updated);
   };
 
-  // Reset to original 81 items
+  // Reset to original defaults
   const handleResetDefaults = async () => {
-    if (window.confirm('Reset everything to the original DMart docx list (81 items) and sample group tasks?')) {
+    if (window.confirm('Reset everything to original defaults (DMart groceries, clothing list, and group tasks)?')) {
       await resetAllToDefaults();
       setSyncKey((k) => k + 1);
     }
@@ -141,7 +182,7 @@ export default function App() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `dmart-list-backup-${new Date().toISOString().split('T')[0]}.json`;
+    link.download = `smarthub-backup-${new Date().toISOString().split('T')[0]}.json`;
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -175,6 +216,7 @@ export default function App() {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         itemsCount={itemsCount}
+        clothingCount={clothingCount}
         tasksCount={tasksCount}
         connectionStatus={connectionStatus}
         onOpenSyncModal={() => setIsSyncModalOpen(true)}
@@ -194,7 +236,7 @@ export default function App() {
 
       {/* Main Container */}
       <main className="flex-1 max-w-6xl w-full mx-auto px-3 sm:px-4 pt-5">
-        {activeTab === 'dmart' ? (
+        {activeTab === 'dmart' && (
           <DmartList
             items={items}
             onUpdateItem={handleUpdateItem}
@@ -211,7 +253,27 @@ export default function App() {
             teamMembers={teamMembers}
             existingFloors={existingFloors}
           />
-        ) : (
+        )}
+
+        {activeTab === 'clothing' && (
+          <ClothingList
+            clothingItems={clothingItems}
+            onUpdateClothing={handleUpdateClothing}
+            onDeleteClothing={handleDeleteClothing}
+            onAddClothing={handleAddClothing}
+            onOpenAddModal={() => {
+              setClothingToEdit(null);
+              setIsClothingModalOpen(true);
+            }}
+            onOpenEditModal={(clothing) => {
+              setClothingToEdit(clothing);
+              setIsClothingModalOpen(true);
+            }}
+            teamMembers={teamMembers}
+          />
+        )}
+
+        {activeTab === 'tasks' && (
           <GroupTasks
             tasks={tasks}
             onAddTask={handleAddTask}
@@ -223,7 +285,7 @@ export default function App() {
         )}
       </main>
 
-      {/* Add / Edit DMart Item Modal */}
+      {/* DMart Grocery Modal */}
       <ItemModal
         isOpen={isItemModalOpen}
         onClose={() => setIsItemModalOpen(false)}
@@ -239,6 +301,21 @@ export default function App() {
         teamMembers={teamMembers}
       />
 
+      {/* Clothing Modal */}
+      <ClothingModal
+        isOpen={isClothingModalOpen}
+        onClose={() => setIsClothingModalOpen(false)}
+        onSave={(clothingData) => {
+          if (clothingToEdit) {
+            handleUpdateClothing(clothingData);
+          } else {
+            handleAddClothing(clothingData);
+          }
+        }}
+        itemToEdit={clothingToEdit}
+        teamMembers={teamMembers}
+      />
+
       {/* Cloud Sync Setup Modal */}
       <CloudSyncModal
         isOpen={isSyncModalOpen}
@@ -248,27 +325,39 @@ export default function App() {
       />
 
       {/* Floating Bottom Navigation for Mobile */}
-      <div className="sm:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 py-2 px-6 flex justify-around items-center z-20 shadow-lg">
+      <div className="sm:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 py-2 px-4 flex justify-around items-center z-20 shadow-lg">
         <button
           onClick={() => setActiveTab('dmart')}
-          className={`flex flex-col items-center gap-0.5 text-xs font-bold transition ${
+          className={`flex flex-col items-center gap-0.5 text-[11px] font-bold transition ${
             activeTab === 'dmart' ? 'text-emerald-700' : 'text-slate-500'
           }`}
         >
-          <span>🛒 DMart List</span>
-          <span className="text-[10px] opacity-75">{itemsCount.pending} pending</span>
+          <span>🛒 DMart</span>
+          <span className="text-[10px] opacity-75">{itemsCount.pending}</span>
+        </button>
+
+        <div className="h-6 w-px bg-slate-200" />
+
+        <button
+          onClick={() => setActiveTab('clothing')}
+          className={`flex flex-col items-center gap-0.5 text-[11px] font-bold transition ${
+            activeTab === 'clothing' ? 'text-pink-600' : 'text-slate-500'
+          }`}
+        >
+          <span>👗 Clothes</span>
+          <span className="text-[10px] opacity-75">{clothingCount.pending}</span>
         </button>
 
         <div className="h-6 w-px bg-slate-200" />
 
         <button
           onClick={() => setActiveTab('tasks')}
-          className={`flex flex-col items-center gap-0.5 text-xs font-bold transition ${
+          className={`flex flex-col items-center gap-0.5 text-[11px] font-bold transition ${
             activeTab === 'tasks' ? 'text-indigo-700' : 'text-slate-500'
           }`}
         >
-          <span>👥 Group Tasks</span>
-          <span className="text-[10px] opacity-75">{tasksCount.pending} open</span>
+          <span>👥 Tasks</span>
+          <span className="text-[10px] opacity-75">{tasksCount.pending}</span>
         </button>
       </div>
     </div>

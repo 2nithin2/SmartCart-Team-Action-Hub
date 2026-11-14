@@ -7,6 +7,7 @@ export const initialTeamMembers = [
   "Kavitha"
 ];
 
+// 1. DMart Grocery & Household Items (From original docx - 81 items)
 export const initialDmartItems = [
   // 1st Floor Items (Groceries, Food, Spices, Staples)
   {
@@ -179,7 +180,7 @@ export const initialDmartItems = [
   },
   {
     id: "dm-15",
-    name: "Chenaga pappu (Chana dal)",
+    name: "Chenaga pappu ½ kg",
     qty: "1",
     unit: "packet",
     size: "1/2 kg (500g)",
@@ -985,6 +986,139 @@ export const initialDmartItems = [
   }
 ];
 
+// 2. Dressing & Clothing Shopping Cart (Apparel, Shirts, Jeans, Kurtis, Sizes S/M/L/XL/32/34, Colors, Fitting)
+export const initialClothingItems = [
+  {
+    id: "cl-1",
+    name: "Formal Cotton Shirt (Slim Fit)",
+    section: "Men's Wear",
+    category: "Shirts",
+    size: "40 (L)",
+    color: "Sky Blue",
+    qty: "2",
+    unit: "pcs",
+    brand: "Allen Solly / Raymond",
+    assignedTo: "Nithin",
+    trialStatus: "pending_trial", // 'pending_trial' | 'fitting_checked' | 'in_cart' | 'purchased'
+    status: "pending",
+    priceEstimate: "₹1,299",
+    notes: "Full sleeves, spread collar for office wear"
+  },
+  {
+    id: "cl-2",
+    name: "Dark Denim Stretch Jeans",
+    section: "Men's Wear",
+    category: "Trousers & Jeans",
+    size: "32",
+    color: "Navy Blue",
+    qty: "1",
+    unit: "pcs",
+    brand: "Levi's / Spykar",
+    assignedTo: "Rahul",
+    trialStatus: "in_cart",
+    status: "pending",
+    priceEstimate: "₹1,899",
+    notes: "Comfort fit, check waist stretch"
+  },
+  {
+    id: "cl-3",
+    name: "Floral Anarkali Cotton Kurti",
+    section: "Women's Wear",
+    category: "Kurtis & Suits",
+    size: "M",
+    color: "Maroon & Gold",
+    qty: "2",
+    unit: "pcs",
+    brand: "Aurelia / Biba",
+    assignedTo: "Priya",
+    trialStatus: "fitting_checked",
+    status: "pending",
+    priceEstimate: "₹999",
+    notes: "With matching dupatta, breathable cotton"
+  },
+  {
+    id: "cl-4",
+    name: "Traditional Kanjeevaram Silk Saree",
+    section: "Women's Wear",
+    category: "Ethnic Wear",
+    size: "Free Size",
+    color: "Teal Green with Gold Zari",
+    qty: "1",
+    unit: "pcs",
+    brand: "Festival Special",
+    assignedTo: "Anitha",
+    trialStatus: "in_cart",
+    status: "pending",
+    priceEstimate: "₹3,499",
+    notes: "Includes unstitched blouse piece"
+  },
+  {
+    id: "cl-5",
+    name: "Kids Graphic Dinosaur T-Shirt",
+    section: "Kids Wear",
+    category: "T-Shirts",
+    size: "6-7 Yrs (Size 26)",
+    color: "Bright Yellow",
+    qty: "3",
+    unit: "pcs",
+    brand: "Hopscotch / Max",
+    assignedTo: "Kavitha",
+    trialStatus: "purchased",
+    status: "completed",
+    priceEstimate: "₹499",
+    notes: "Soft 100% bio-wash cotton"
+  },
+  {
+    id: "cl-6",
+    name: "Lightweight Breathable Walking Shoes",
+    section: "Footwear",
+    category: "Shoes",
+    size: "UK 9",
+    color: "Black & White",
+    qty: "1",
+    unit: "pair",
+    brand: "Skechers / Campus",
+    assignedTo: "Nithin",
+    trialStatus: "pending_trial",
+    status: "pending",
+    priceEstimate: "₹1,599",
+    notes: "Memory foam sole for daily walking"
+  },
+  {
+    id: "cl-7",
+    name: "Cotton Casual Polo T-Shirts",
+    section: "Men's Wear",
+    category: "T-Shirts",
+    size: "XL",
+    color: "Olive Green & Charcoal",
+    qty: "2",
+    unit: "pcs",
+    brand: "US Polo / Netplay",
+    assignedTo: "Ramesh",
+    trialStatus: "purchased",
+    status: "completed",
+    priceEstimate: "₹899",
+    notes: "Already tried and bought"
+  },
+  {
+    id: "cl-8",
+    name: "4-Way Stretch Leggings / Churidhar",
+    section: "Women's Wear",
+    category: "Bottom Wear",
+    size: "L",
+    color: "Black & Off-White",
+    qty: "2",
+    unit: "pcs",
+    brand: "Lyra / Go Colors",
+    assignedTo: "Priya",
+    trialStatus: "purchased",
+    status: "completed",
+    priceEstimate: "₹450",
+    notes: "Ankle length"
+  }
+];
+
+// 3. Group Action & Task Assignments
 export const initialGroupTasks = [
   {
     id: "task-1",
@@ -993,18 +1127,18 @@ export const initialGroupTasks = [
     priority: "urgent",
     status: "in_progress",
     dueDate: "2026-11-13",
-    category: "Price Check",
+    category: "Grocery Price Check",
     notes: "Check 25kg Sona Masoori brand combo discount and Gold Drop 8 packet carton price before billing."
   },
   {
     id: "task-2",
-    title: "Collect Floor 2 Cleaning & Pooja Items",
-    assignedTo: "Anitha",
+    title: "Dressing Trial Room Check: Priya's Kurti & Size Fitting",
+    assignedTo: "Priya",
     priority: "high",
-    status: "pending",
+    status: "in_progress",
     dueDate: "2026-11-13",
-    category: "Shopping Follow-up",
-    notes: "Pooja deepam oil 2L, Camphor, Mangaldeep 3-in-1 Agarbatti, and fresh coconuts (3 pcs)."
+    category: "Dressing Trial",
+    notes: "Try Size M vs Size L for Anarkali Kurti in Trial Room 3. Confirm color."
   },
   {
     id: "task-3",
@@ -1018,22 +1152,32 @@ export const initialGroupTasks = [
   },
   {
     id: "task-4",
-    title: "Pick up 24 Cloth Hanging Clips & Bath Soaps",
+    title: "Pick up 24 Cloth Hanging Clips & Santoor Bundle",
     assignedTo: "Priya",
     priority: "medium",
-    status: "in_progress",
+    status: "pending",
     dueDate: "2026-11-13",
     category: "Shopping Follow-up",
     notes: "Check quality of hanging clip plastic ring. Get Santoor bundle pack."
   },
   {
     id: "task-5",
-    title: "Final Billing & Bill Cross-Verification",
+    title: "Trial Men's Formal Shirts & Size 32 Jeans Fitting",
+    assignedTo: "Nithin",
+    priority: "high",
+    status: "pending",
+    dueDate: "2026-11-13",
+    category: "Dressing Trial",
+    notes: "Check collar fit on 40 (L) shirt and length of 32 jeans."
+  },
+  {
+    id: "task-6",
+    title: "Final Billing & Bill Cross-Verification across Carts",
     assignedTo: "Ramesh",
     priority: "high",
     status: "pending",
     dueDate: "2026-11-13",
     category: "Checkout & Payment",
-    notes: "Cross check billing counter receipt against this app before loading vehicle."
+    notes: "Cross check billing counter receipt for both Groceries and Clothes before vehicle loading."
   }
 ];

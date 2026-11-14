@@ -1,17 +1,23 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getDatabase, ref, onValue, set, update } from "firebase/database";
-import { initialDmartItems, initialGroupTasks, initialTeamMembers } from "../data/seedItems";
+import { 
+  initialDmartItems, 
+  initialClothingItems, 
+  initialGroupTasks, 
+  initialTeamMembers 
+} from "../data/seedItems";
 
-const LOCAL_STORAGE_KEY_ITEMS = "dmart_items_v2";
-const LOCAL_STORAGE_KEY_TASKS = "dmart_tasks_v2";
-const LOCAL_STORAGE_KEY_MEMBERS = "dmart_members_v2";
-const LOCAL_STORAGE_KEY_CONFIG = "dmart_firebase_config_v2";
+const LOCAL_STORAGE_KEY_ITEMS = "smarthub_groceries_v3";
+const LOCAL_STORAGE_KEY_CLOTHING = "smarthub_clothing_v3";
+const LOCAL_STORAGE_KEY_TASKS = "smarthub_tasks_v3";
+const LOCAL_STORAGE_KEY_MEMBERS = "smarthub_members_v3";
+const LOCAL_STORAGE_KEY_CONFIG = "smarthub_firebase_config_v3";
 
 // Broadcast channel for multi-tab local sync
 let broadcastChannel = null;
 try {
   if (typeof window !== "undefined" && "BroadcastChannel" in window) {
-    broadcastChannel = new BroadcastChannel("dmart_sync_channel");
+    broadcastChannel = new BroadcastChannel("smarthub_sync_channel");
   }
 } catch (e) {
   console.warn("BroadcastChannel not supported", e);
@@ -90,9 +96,10 @@ export function initFirebase() {
   }
 }
 
-// Subscribe to real-time sync
+// Subscribe to real-time sync across all 3 modules
 export function subscribeToSync({
   onItemsChange,
+  onClothingChange,
   onTasksChange,
   onMembersChange,
   onConnectionStatus
@@ -103,12 +110,13 @@ export function subscribeToSync({
     onConnectionStatus({
       connected: true,
       mode: "cloud",
-      message: "🟢 Connected to Cloud Realtime Database (Multi-User Synced)"
+      message: "🟢 Connected to Cloud Realtime Database (Multi-User Synced across all devices)"
     });
 
-    const itemsRef = ref(db, "dmart_shared/items");
-    const tasksRef = ref(db, "dmart_shared/tasks");
-    const membersRef = ref(db, "dmart_shared/members");
+    const itemsRef = ref(db, "smarthub/groceries");
+    const clothingRef = ref(db, "smarthub/clothing");
+    const tasksRef = ref(db, "smarthub/tasks");
+    const membersRef = ref(db, "smarthub/members");
 
     const unsubItems = onValue(itemsRef, (snapshot) => {
       const data = snapshot.val();
@@ -116,7 +124,6 @@ export function subscribeToSync({
         localStorage.setItem(LOCAL_STORAGE_KEY_ITEMS, JSON.stringify(data));
         onItemsChange(data);
       } else if (!data) {
-        // First time cloud initialization with default items
         const local = getLocalItems();
         set(itemsRef, local);
         onItemsChange(local);
@@ -129,6 +136,18 @@ export function subscribeToSync({
         message: `⚠️ Cloud Sync Error: ${error.message}. Using Local Storage.`
       });
       onItemsChange(getLocalItems());
+    });
+
+    const unsubClothing = onValue(clothingRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data && Array.isArray(data)) {
+        localStorage.setItem(LOCAL_STORAGE_KEY_CLOTHING, JSON.stringify(data));
+        if (onClothingChange) onClothingChange(data);
+      } else if (!data) {
+        const local = getLocalClothing();
+        set(clothingRef, local);
+        if (onClothingChange) onClothingChange(local);
+      }
     });
 
     const unsubTasks = onValue(tasksRef, (snapshot) => {
@@ -157,6 +176,7 @@ export function subscribeToSync({
 
     return () => {
       unsubItems();
+      unsubClothing();
       unsubTasks();
       unsubMembers();
     };
@@ -165,10 +185,11 @@ export function subscribeToSync({
     onConnectionStatus({
       connected: false,
       mode: "local",
-      message: "🟡 Local Storage Mode (Click 'Connect Cloud Sync' to sync with other users)"
+      message: "🟡 Local Storage Mode (Click 'Connect Multi-User Sync' to sync with other users)"
     });
 
     onItemsChange(getLocalItems());
+    if (onClothingChange) onClothingChange(getLocalClothing());
     onTasksChange(getLocalTasks());
     onMembersChange(getLocalMembers());
 
@@ -176,6 +197,7 @@ export function subscribeToSync({
       const handleBroadcast = (event) => {
         const { type, data } = event.data || {};
         if (type === "ITEMS_UPDATED") onItemsChange(data);
+        if (type === "CLOTHING_UPDATED" && onClothingChange) onClothingChange(data);
         if (type === "TASKS_UPDATED") onTasksChange(data);
         if (type === "MEMBERS_UPDATED") onMembersChange(data);
       };
@@ -201,6 +223,19 @@ export function getLocalItems() {
     }
   }
   return initialDmartItems;
+}
+
+export function getLocalClothing() {
+  if (typeof window === "undefined") return initialClothingItems;
+  const saved = localStorage.getItem(LOCAL_STORAGE_KEY_CLOTHING);
+  if (saved) {
+    try {
+      return JSON.parse(saved);
+    } catch (e) {
+      console.error("Failed to parse local clothing", e);
+    }
+  }
+  return initialClothingItems;
 }
 
 export function getLocalTasks() {
@@ -240,10 +275,28 @@ export async function syncSaveItems(items) {
 
   if (realtimeDb) {
     try {
-      const itemsRef = ref(realtimeDb, "dmart_shared/items");
+      const itemsRef = ref(realtimeDb, "smarthub/groceries");
       await set(itemsRef, items);
     } catch (err) {
       console.error("Failed to push items to Firebase:", err);
+    }
+  }
+}
+
+export async function syncSaveClothing(clothing) {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(LOCAL_STORAGE_KEY_CLOTHING, JSON.stringify(clothing));
+    if (broadcastChannel) {
+      broadcastChannel.postMessage({ type: "CLOTHING_UPDATED", data: clothing });
+    }
+  }
+
+  if (realtimeDb) {
+    try {
+      const clothingRef = ref(realtimeDb, "smarthub/clothing");
+      await set(clothingRef, clothing);
+    } catch (err) {
+      console.error("Failed to push clothing to Firebase:", err);
     }
   }
 }
@@ -258,7 +311,7 @@ export async function syncSaveTasks(tasks) {
 
   if (realtimeDb) {
     try {
-      const tasksRef = ref(realtimeDb, "dmart_shared/tasks");
+      const tasksRef = ref(realtimeDb, "smarthub/tasks");
       await set(tasksRef, tasks);
     } catch (err) {
       console.error("Failed to push tasks to Firebase:", err);
@@ -276,7 +329,7 @@ export async function syncSaveMembers(members) {
 
   if (realtimeDb) {
     try {
-      const membersRef = ref(realtimeDb, "dmart_shared/members");
+      const membersRef = ref(realtimeDb, "smarthub/members");
       await set(membersRef, members);
     } catch (err) {
       console.error("Failed to push members to Firebase:", err);
@@ -288,8 +341,9 @@ export async function syncSaveMembers(members) {
 export function exportAllData() {
   const data = {
     exportDate: new Date().toISOString(),
-    version: "2.0",
-    items: getLocalItems(),
+    version: "3.0",
+    groceries: getLocalItems(),
+    clothing: getLocalClothing(),
     tasks: getLocalTasks(),
     teamMembers: getLocalMembers()
   };
@@ -299,8 +353,13 @@ export function exportAllData() {
 export async function importAllData(jsonString) {
   try {
     const data = JSON.parse(jsonString);
-    if (data.items && Array.isArray(data.items)) {
+    if (data.groceries && Array.isArray(data.groceries)) {
+      await syncSaveItems(data.groceries);
+    } else if (data.items && Array.isArray(data.items)) {
       await syncSaveItems(data.items);
+    }
+    if (data.clothing && Array.isArray(data.clothing)) {
+      await syncSaveClothing(data.clothing);
     }
     if (data.tasks && Array.isArray(data.tasks)) {
       await syncSaveTasks(data.tasks);
@@ -316,6 +375,7 @@ export async function importAllData(jsonString) {
 
 export async function resetAllToDefaults() {
   await syncSaveItems(initialDmartItems);
+  await syncSaveClothing(initialClothingItems);
   await syncSaveTasks(initialGroupTasks);
   await syncSaveMembers(initialTeamMembers);
 }
