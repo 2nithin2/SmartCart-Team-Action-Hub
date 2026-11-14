@@ -132,13 +132,12 @@ export default function DmartList({
     });
 
     if (nextStatus === 'completed') {
-      // Check if floor completed
       const floorItems = items.filter((i) => (i.floor === item.floor && (i.itemId || i.id) !== item.id));
       const allOthersDone = floorItems.every((i) => i.status === 'completed');
       if (allOthersDone && floorItems.length > 0) {
         confetti({
-          particleCount: 80,
-          spread: 70,
+          particleCount: 90,
+          spread: 75,
           origin: { y: 0.6 }
         });
       }
@@ -216,37 +215,37 @@ export default function DmartList({
     });
   };
 
-  // Assignee avatar badge color generator
+  // Assignee avatar badge color generator with crisp initial letters
   const getAvatarColor = (name) => {
     const colors = [
-      'bg-emerald-500 text-white',
-      'bg-indigo-500 text-white',
-      'bg-rose-500 text-white',
-      'bg-amber-500 text-slate-900',
-      'bg-purple-500 text-white',
-      'bg-sky-500 text-white'
+      'bg-indigo-600 text-white border-indigo-400/40',
+      'bg-pink-600 text-white border-pink-400/40',
+      'bg-emerald-600 text-white border-emerald-400/40',
+      'bg-purple-600 text-white border-purple-400/40',
+      'bg-amber-600 text-white border-amber-400/40',
+      'bg-cyan-600 text-white border-cyan-400/40'
     ];
-    if (!name || name === 'Unassigned') return 'bg-slate-200 text-slate-700';
+    if (!name || name === 'Unassigned') return 'bg-slate-700 text-slate-300 border-slate-600/40';
     let hash = 0;
     for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
     return colors[Math.abs(hash) % colors.length];
   };
 
   return (
-    <div className="space-y-5 pb-16">
-      {/* Interactive Progress Tracker & Velocity Header with Glassmorphism */}
+    <div className="space-y-4 pb-16">
+      {/* 1. Velocity Tracker Header with Glassmorphism */}
       <div className="glass-card rounded-2xl p-4 sm:p-5">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="p-2 bg-emerald-100/80 text-emerald-800 rounded-xl shadow-xs">
-                <ShoppingBag className="w-5 h-5 text-emerald-700" />
+            <div className="flex items-center gap-3">
+              <span className="p-2.5 bg-emerald-500/20 text-emerald-300 rounded-xl border border-emerald-500/30 shadow-xs">
+                <ShoppingBag className="w-5 h-5 text-emerald-400" />
               </span>
               <div>
-                <h2 className="text-xl font-extrabold text-slate-800 tracking-tight">
+                <h2 className="text-xl font-extrabold text-slate-50 tracking-tight">
                   DMart Grocery &amp; Staples Cart
                 </h2>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-slate-400 mt-0.5">
                   Zone-categorized inventory (1st &amp; 2nd Floor) • Real-time collaborator sync
                 </p>
               </div>
@@ -257,17 +256,17 @@ export default function DmartList({
           <div className="flex items-center gap-2 self-stretch sm:self-auto">
             <button
               onClick={handleCopyForWhatsApp}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs font-bold text-slate-700 bg-white/80 hover:bg-white border border-slate-200 rounded-xl shadow-xs transition"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs font-bold text-slate-200 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl shadow-xs transition"
               title="Copy formatted list for WhatsApp"
             >
               {copiedNotification ? (
                 <>
-                  <CheckCheck className="w-4 h-4 text-emerald-600" />
-                  <span className="text-emerald-700">Copied to WhatsApp!</span>
+                  <CheckCheck className="w-4 h-4 text-emerald-400" />
+                  <span className="text-emerald-300">Copied to WhatsApp!</span>
                 </>
               ) : (
                 <>
-                  <Copy className="w-4 h-4 text-slate-500" />
+                  <Copy className="w-4 h-4 text-slate-400" />
                   <span>Copy for WhatsApp</span>
                 </>
               )}
@@ -275,7 +274,7 @@ export default function DmartList({
 
             <button
               onClick={() => onOpenAddModal()}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 text-xs sm:text-sm font-bold text-white bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 rounded-xl shadow-md shadow-emerald-600/20 transition"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 text-xs sm:text-sm font-bold text-white bg-linear-to-r from-indigo-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 rounded-xl shadow-lg glow-indigo transition"
             >
               <Plus className="w-4 h-4" />
               <span>+ Add Item</span>
@@ -283,38 +282,38 @@ export default function DmartList({
           </div>
         </div>
 
-        {/* Real-time Shopping Velocity & Progress Tracker Bar */}
-        <div className="mt-4 pt-3.5 border-t border-slate-200/60">
-          <div className="flex flex-wrap items-center justify-between text-xs font-semibold text-slate-600 mb-2 gap-2">
+        {/* 4.B Smooth Progress Bar & Velocity Tracker */}
+        <div className="mt-4 pt-3.5 border-t border-white/10">
+          <div className="flex flex-wrap items-center justify-between text-xs font-semibold text-slate-300 mb-2 gap-2">
             <div className="flex items-center gap-2">
-              <span className="flex items-center gap-1 text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60 font-bold">
-                <TrendingUp className="w-3.5 h-3.5" />
+              <span className="flex items-center gap-1 text-emerald-300 bg-emerald-950/70 px-2 py-0.5 rounded-md border border-emerald-500/30 font-bold">
+                <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
                 <span>Velocity Tracker</span>
               </span>
               <span>{stats.completed} of {stats.total} items picked ({stats.percent}%)</span>
             </div>
-            <span className="text-slate-500 font-medium">
+            <span className="text-slate-400 font-medium">
               {stats.pending} items remaining
             </span>
           </div>
 
-          <div className="w-full bg-slate-200/70 rounded-full h-3 overflow-hidden p-0.5 shadow-inner">
+          <div className="progress-track w-full">
             <div
-              className="bg-linear-to-r from-emerald-500 via-teal-500 to-emerald-600 h-full rounded-full transition-all duration-500 ease-out shadow-xs"
+              className="progress-fill"
               style={{ width: `${stats.percent}%` }}
             />
           </div>
         </div>
       </div>
 
-      {/* Quick-Add Bar with Glassmorphic styling (per spec) */}
-      <div className="glass-card rounded-2xl p-4 shadow-sm border border-emerald-500/30">
-        <div className="text-xs font-bold text-emerald-950 uppercase tracking-wider mb-2.5 flex items-center justify-between">
+      {/* 2. Quick-Add Bar with Glassmorphic styling */}
+      <div className="glass-card rounded-2xl p-4 border border-indigo-500/30">
+        <div className="text-xs font-bold text-indigo-300 uppercase tracking-wider mb-2.5 flex items-center justify-between">
           <span className="flex items-center gap-1.5">
-            <Sparkles className="w-4 h-4 text-emerald-600" />
+            <Sparkles className="w-4 h-4 text-indigo-400" />
             <span>Quick-Add Item (Qty • Unit • Size/Specs • Floor)</span>
           </span>
-          <span className="text-[11px] font-normal text-emerald-800">
+          <span className="text-[11px] font-normal text-slate-400">
             Press Enter to add instantly
           </span>
         </div>
@@ -350,10 +349,10 @@ export default function DmartList({
             <select
               value={quickUnit}
               onChange={(e) => setQuickUnit(e.target.value)}
-              className="glass-input w-full px-2.5 py-2 text-sm rounded-xl font-medium focus:outline-none bg-white/90"
+              className="glass-input w-full px-2.5 py-2 text-sm rounded-xl font-medium focus:outline-none"
             >
               {UNIT_OPTIONS.map((u) => (
-                <option key={u} value={u}>{u}</option>
+                <option key={u} value={u} className="bg-slate-900 text-slate-100">{u}</option>
               ))}
             </select>
           </div>
@@ -374,10 +373,10 @@ export default function DmartList({
             <select
               value={quickFloor}
               onChange={(e) => setQuickFloor(e.target.value)}
-              className="glass-input w-full px-2.5 py-2 text-xs font-semibold rounded-xl focus:outline-none bg-white/90 truncate"
+              className="glass-input w-full px-2.5 py-2 text-xs font-semibold rounded-xl focus:outline-none truncate"
             >
               {existingFloors.map((f) => (
-                <option key={f} value={f}>{f}</option>
+                <option key={f} value={f} className="bg-slate-900 text-slate-100">{f}</option>
               ))}
             </select>
           </div>
@@ -386,7 +385,7 @@ export default function DmartList({
           <div className="col-span-2 sm:col-span-1 flex">
             <button
               type="submit"
-              className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-sm transition shadow-sm flex items-center justify-center shrink-0"
+              className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-sm transition shadow-md glow-indigo flex items-center justify-center shrink-0"
               title="Add Item"
             >
               <Plus className="w-5 h-5" />
@@ -395,7 +394,7 @@ export default function DmartList({
         </form>
       </div>
 
-      {/* Smart Filtering & Assignee Avatar Chips (per spec) */}
+      {/* 3. Smart Filtering & Assignee Avatar Chips */}
       <div className="glass-card rounded-2xl p-4 space-y-3.5">
         {/* Search Bar */}
         <div className="relative">
@@ -410,7 +409,7 @@ export default function DmartList({
           {search && (
             <button
               onClick={() => setSearch('')}
-              className="absolute right-3.5 top-2.5 text-xs font-semibold text-slate-400 hover:text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md"
+              className="absolute right-3.5 top-2.5 text-xs font-semibold text-slate-300 hover:text-white bg-white/10 px-2 py-0.5 rounded-md"
             >
               Clear
             </button>
@@ -418,15 +417,15 @@ export default function DmartList({
         </div>
 
         {/* Floor & Status Filter Chips */}
-        <div className="flex flex-wrap items-center justify-between gap-2.5 pt-1 border-t border-slate-200/60">
+        <div className="flex flex-wrap items-center justify-between gap-2.5 pt-1 border-t border-white/10">
           {/* Floor Chips */}
           <div className="flex flex-wrap items-center gap-1.5">
             <button
               onClick={() => setSelectedFloor('All')}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition shadow-xs ${
                 selectedFloor === 'All'
-                  ? 'bg-slate-900 text-white'
-                  : 'bg-white/80 text-slate-700 hover:bg-white border border-slate-200'
+                  ? 'bg-indigo-600 text-white shadow-md glow-indigo border border-indigo-400/40'
+                  : 'bg-white/5 text-slate-300 hover:bg-white/10 border border-white/10'
               }`}
             >
               All Zones ({items.length})
@@ -440,13 +439,13 @@ export default function DmartList({
                   onClick={() => setSelectedFloor(f)}
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
                     selectedFloor === f
-                      ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20'
-                      : 'bg-emerald-50/80 text-emerald-800 hover:bg-emerald-100 border border-emerald-200/60'
+                      ? 'bg-indigo-600 text-white shadow-md glow-indigo border border-indigo-400/40'
+                      : 'bg-white/5 text-slate-300 hover:bg-white/10 border border-white/10'
                   }`}
                 >
                   <span>{f}</span>
                   <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
-                    selectedFloor === f ? 'bg-emerald-700 text-white' : 'bg-emerald-200/80 text-emerald-900'
+                    selectedFloor === f ? 'bg-indigo-800 text-white' : 'bg-white/10 text-slate-400'
                   }`}>
                     {floorDone}/{floorTotal}
                   </span>
@@ -460,18 +459,18 @@ export default function DmartList({
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="glass-input px-3 py-1.5 text-xs rounded-xl font-bold text-slate-700 bg-white/90"
+              className="glass-input px-3 py-1.5 text-xs rounded-xl font-bold text-slate-200"
             >
-              <option value="all">Status: All Items</option>
-              <option value="pending">⏳ Pending to Pick</option>
-              <option value="completed">✅ Purchased (Struck)</option>
+              <option value="all" className="bg-slate-900 text-slate-100">Status: All Items</option>
+              <option value="pending" className="bg-slate-900 text-slate-100">⏳ Pending to Pick</option>
+              <option value="completed" className="bg-slate-900 text-slate-100">✅ Purchased (Struck)</option>
             </select>
           </div>
         </div>
 
         {/* Assignee Avatar Chips (Smart Filtering) */}
-        <div className="pt-2 border-t border-slate-200/60">
-          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+        <div className="pt-2 border-t border-white/10">
+          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">
             Filter by Assignee:
           </div>
           <div className="flex flex-wrap items-center gap-1.5">
@@ -479,22 +478,24 @@ export default function DmartList({
               onClick={() => setAssignedFilter('all')}
               className={`px-3 py-1 rounded-xl text-xs font-bold transition ${
                 assignedFilter === 'all'
-                  ? 'bg-indigo-600 text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  ? 'bg-indigo-600 text-white shadow-sm'
+                  : 'bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10'
               }`}
             >
-              Everyone
+              All Assignees
             </button>
+
             <button
               onClick={() => setAssignedFilter('unassigned')}
-              className={`px-3 py-1 rounded-xl text-xs font-medium transition ${
+              className={`px-3 py-1 rounded-xl text-xs font-bold transition ${
                 assignedFilter === 'unassigned'
-                  ? 'bg-slate-800 text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  ? 'bg-amber-600 text-white'
+                  : 'bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10'
               }`}
             >
-              Unassigned
+              Unassigned ({items.filter((i) => !i.assignee || i.assignee === 'Unassigned').length})
             </button>
+
             {teamMembers.map((member) => {
               const count = items.filter((i) => (i.assignee === member || i.assignedTo === member)).length;
               const pendingCount = items.filter((i) => (i.assignee === member || i.assignedTo === member) && i.status !== 'completed').length;
@@ -504,16 +505,16 @@ export default function DmartList({
                   onClick={() => setAssignedFilter(member)}
                   className={`px-2.5 py-1 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 ${
                     assignedFilter === member
-                      ? 'bg-indigo-600 text-white shadow-xs'
-                      : 'bg-white/80 hover:bg-white text-slate-700 border border-slate-200'
+                      ? 'bg-indigo-600 text-white shadow-sm border border-indigo-400/40'
+                      : 'bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10'
                   }`}
                 >
-                  <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold ${getAvatarColor(member)}`}>
+                  <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold border ${getAvatarColor(member)}`}>
                     {member.charAt(0)}
                   </span>
                   <span>{member}</span>
                   <span className={`text-[10px] px-1.5 rounded-full ${
-                    assignedFilter === member ? 'bg-indigo-700 text-white' : 'bg-slate-100 text-slate-600'
+                    assignedFilter === member ? 'bg-indigo-800 text-white' : 'bg-white/10 text-slate-400'
                   }`}>
                     {pendingCount}/{count}
                   </span>
@@ -527,9 +528,9 @@ export default function DmartList({
       {/* Zone / Floor Grouped Items with Frosted Glass Cards */}
       {Object.keys(itemsByFloor).length === 0 ? (
         <div className="glass-card rounded-2xl p-12 text-center">
-          <ShoppingBag className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <h3 className="text-base font-bold text-slate-700">No items match your filter</h3>
-          <p className="text-xs text-slate-500 mt-1">
+          <ShoppingBag className="w-12 h-12 text-slate-500 mx-auto mb-3" />
+          <h3 className="text-base font-bold text-slate-200">No items match your filter</h3>
+          <p className="text-xs text-slate-400 mt-1">
             Try clearing your search query or reset the floor / status filter.
           </p>
           <button
@@ -539,7 +540,7 @@ export default function DmartList({
               setStatusFilter('all');
               setAssignedFilter('all');
             }}
-            className="mt-4 px-4 py-2 bg-slate-900 text-white hover:bg-slate-800 rounded-xl text-xs font-bold"
+            className="mt-4 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition shadow-md glow-indigo"
           >
             Reset All Filters
           </button>
@@ -557,36 +558,36 @@ export default function DmartList({
               className="glass-card rounded-2xl overflow-hidden shadow-sm"
             >
               {/* Floor Zone Header with Progress */}
-              <div className="bg-slate-50/70 backdrop-blur-md px-4 py-3 border-b border-slate-200/60 flex flex-wrap items-center justify-between gap-3">
+              <div className="bg-slate-900/60 backdrop-blur-md px-4 py-3 border-b border-white/10 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-2.5">
-                  <span className="p-1.5 bg-emerald-100/90 text-emerald-800 rounded-lg shadow-2xs">
-                    <Layers className="w-4 h-4 text-emerald-700" />
+                  <span className="p-1.5 bg-emerald-500/20 text-emerald-300 rounded-lg border border-emerald-500/30">
+                    <Layers className="w-4 h-4 text-emerald-400" />
                   </span>
                   <div>
-                    <h3 className="text-sm sm:text-base font-extrabold text-slate-800 tracking-tight">
+                    <h3 className="text-sm sm:text-base font-extrabold text-slate-50 tracking-tight">
                       {floorName}
                     </h3>
-                    <p className="text-[11px] text-slate-500 font-medium">
+                    <p className="text-[11px] text-slate-400 font-medium">
                       {floorCompleted} of {floorTotal} items picked ({floorPercent}%)
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <div className="w-24 sm:w-36 bg-slate-200 rounded-full h-2 overflow-hidden shadow-inner">
+                  <div className="w-24 sm:w-36 progress-track">
                     <div
-                      className="bg-emerald-600 h-full rounded-full transition-all duration-300"
+                      className="progress-fill"
                       style={{ width: `${floorPercent}%` }}
                     />
                   </div>
-                  <span className="text-xs font-extrabold text-slate-700 min-w-8 text-right">
+                  <span className="text-xs font-extrabold text-slate-300 min-w-8 text-right">
                     {floorPercent}%
                   </span>
                 </div>
               </div>
 
               {/* Items in this Floor Zone */}
-              <div className="divide-y divide-slate-100/80">
+              <div className="divide-y divide-white/5">
                 {rawFloorItems.map((rawItem) => {
                   const item = getItemProp(rawItem);
                   const isDone = item.status === 'completed';
@@ -596,8 +597,8 @@ export default function DmartList({
                       key={item.id}
                       className={`p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all ${
                         isDone
-                          ? 'bg-slate-50/50 opacity-60'
-                          : 'hover:bg-white/60'
+                          ? 'bg-slate-950/40 opacity-60'
+                          : 'hover:bg-white/5'
                       }`}
                     >
                       {/* Left: Checkbox & Item Spec details */}
@@ -606,13 +607,13 @@ export default function DmartList({
                           onClick={() => handleToggleComplete(rawItem)}
                           className={`mt-0.5 p-1 rounded-lg transition shrink-0 ${
                             isDone
-                              ? 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100'
-                              : 'text-slate-400 hover:text-emerald-600 bg-slate-100/80 hover:bg-slate-200'
+                              ? 'text-emerald-400 bg-emerald-950/70 border border-emerald-500/30'
+                              : 'text-slate-400 hover:text-emerald-400 bg-white/5 hover:bg-white/10 border border-white/10'
                           }`}
                           title={isDone ? 'Mark as Pending' : 'Mark as Purchased'}
                         >
                           {isDone ? (
-                            <CheckSquare className="w-5 h-5 text-emerald-600 fill-emerald-100" />
+                            <CheckSquare className="w-5 h-5 text-emerald-400" />
                           ) : (
                             <Square className="w-5 h-5" />
                           )}
@@ -620,12 +621,13 @@ export default function DmartList({
 
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
+                            {/* 5. Item Title Rule */}
                             <span
                               onClick={() => handleToggleComplete(rawItem)}
-                              className={`text-sm sm:text-base font-bold cursor-pointer select-none transition ${
+                              className={`item-title cursor-pointer select-none transition ${
                                 isDone
-                                  ? 'line-through text-slate-400 decoration-slate-400 decoration-2'
-                                  : 'text-slate-900 hover:text-emerald-700'
+                                  ? 'line-through text-slate-500'
+                                  : 'text-slate-50 hover:text-emerald-300'
                               }`}
                             >
                               {item.name}
@@ -633,7 +635,7 @@ export default function DmartList({
 
                             {/* Category Pill */}
                             {item.category && (
-                              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">
+                              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-white/5 text-slate-400 border border-white/5">
                                 {item.category}
                               </span>
                             )}
@@ -641,7 +643,7 @@ export default function DmartList({
 
                           {/* Notes / Special specs */}
                           {item.note && (
-                            <p className="text-xs text-slate-500 mt-1 italic font-normal">
+                            <p className="text-xs text-slate-400 mt-1 italic font-normal">
                               💡 {item.note}
                             </p>
                           )}
@@ -649,26 +651,26 @@ export default function DmartList({
                       </div>
 
                       {/* Right: Stepper, Qty & Unit, SizeSpec, Assignee, Actions */}
-                      <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-0 border-slate-100/80">
+                      <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-0 border-white/5">
                         {/* Qty Stepper */}
-                        <div className="flex items-center bg-white/90 rounded-xl p-0.5 border border-slate-200 shadow-2xs">
+                        <div className="flex items-center bg-slate-900/60 rounded-xl p-0.5 border border-white/10 shadow-xs">
                           <button
                             type="button"
                             onClick={() => handleQtyChange(rawItem, -1)}
                             disabled={isDone}
-                            className="p-1 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition disabled:opacity-40"
+                            className="p-1 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition disabled:opacity-30"
                             title="Decrease quantity"
                           >
                             <Minus className="w-3.5 h-3.5" />
                           </button>
-                          <span className="px-2 text-xs font-extrabold text-slate-800 min-w-8 text-center">
+                          <span className="px-2 text-xs font-extrabold text-slate-100 min-w-8 text-center">
                             {item.quantity}
                           </span>
                           <button
                             type="button"
                             onClick={() => handleQtyChange(rawItem, 1)}
                             disabled={isDone}
-                            className="p-1 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition disabled:opacity-40"
+                            className="p-1 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition disabled:opacity-30"
                             title="Increase quantity"
                           >
                             <Plus className="w-3.5 h-3.5" />
@@ -676,18 +678,18 @@ export default function DmartList({
                         </div>
 
                         {/* Unit / Pieces Badge */}
-                        <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200/60 shadow-2xs">
+                        <span className="spec-tag text-emerald-300 font-bold border-emerald-500/20">
                           {item.unit}
                         </span>
 
-                        {/* Size / Specs Badge */}
+                        {/* 5. Metadata Tags (Sizes/Specs) */}
                         {item.sizeSpec ? (
-                          <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-amber-50 text-amber-900 border border-amber-200/60 shadow-2xs max-w-xs truncate" title={item.sizeSpec}>
+                          <span className="spec-tag max-w-xs truncate" title={item.sizeSpec}>
                             📏 {item.sizeSpec}
                           </span>
                         ) : null}
 
-                        {/* Assignee Avatar Pill */}
+                        {/* 5. Assignee Avatar Badge */}
                         <div className="relative">
                           <select
                             value={item.assignee || 'Unassigned'}
@@ -699,37 +701,34 @@ export default function DmartList({
                                 updatedAt: new Date().toISOString()
                               });
                             }}
-                            className={`text-xs px-2.5 py-1 rounded-lg border font-bold transition cursor-pointer shadow-2xs ${
-                              item.assignee && item.assignee !== 'Unassigned'
-                                ? 'bg-indigo-50 text-indigo-900 border-indigo-200'
-                                : 'bg-slate-50 text-slate-500 border-slate-200'
-                            }`}
+                            className="glass-input text-xs font-semibold px-2.5 py-1 rounded-xl appearance-none pr-6 cursor-pointer"
                           >
-                            <option value="Unassigned">👤 Unassigned</option>
+                            <option value="Unassigned" className="bg-slate-900 text-slate-200">👤 Unassigned</option>
                             {teamMembers.map((m) => (
-                              <option key={m} value={m}>
-                                👤 {m}
-                              </option>
+                              <option key={m} value={m} className="bg-slate-900 text-slate-200">👤 {m}</option>
                             ))}
                           </select>
+                          <div className="pointer-events-none absolute right-2 top-1.5 text-slate-400 text-[10px]">
+                            ▼
+                          </div>
                         </div>
 
-                        {/* Edit & Delete Controls */}
-                        <div className="flex items-center gap-1 pl-1">
+                        {/* Actions: Edit & Delete */}
+                        <div className="flex items-center gap-1">
                           <button
                             onClick={() => onOpenEditModal(rawItem)}
-                            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-white rounded-lg transition"
+                            className="p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition"
                             title="Edit Item Details"
                           >
                             <Edit3 className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => {
-                              if (window.confirm(`Delete "${item.name}" from the list?`)) {
+                              if (window.confirm(`Delete "${item.name}" from shopping list?`)) {
                                 onDeleteItem(item.id);
                               }
                             }}
-                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                            className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-950/40 rounded-lg transition"
                             title="Delete Item"
                           >
                             <Trash2 className="w-4 h-4" />

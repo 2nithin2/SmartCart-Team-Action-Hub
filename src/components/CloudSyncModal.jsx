@@ -89,49 +89,49 @@ export default function CloudSyncModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fadeIn">
-      <div className="glass-panel bg-white/95 rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto border border-white/80">
+      <div className="glass-panel rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto border border-white/15">
         {/* Modal Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-100 bg-slate-50/70 rounded-t-2xl">
+        <div className="flex items-center justify-between p-4 border-b border-white/10 bg-slate-900/60 rounded-t-2xl">
           <div className="flex items-center gap-2.5">
             <div className={`p-2 rounded-xl ${
               connectionStatus.connected
-                ? 'bg-emerald-100 text-emerald-800'
-                : 'bg-amber-100 text-amber-800'
+                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
             }`}>
               {connectionStatus.connected ? (
-                <Cloud className="w-5 h-5 text-emerald-700" />
+                <Cloud className="w-5 h-5 text-emerald-400" />
               ) : (
-                <CloudOff className="w-5 h-5 text-amber-700" />
+                <CloudOff className="w-5 h-5 text-amber-400" />
               )}
             </div>
             <div>
-              <h2 className="text-lg font-extrabold text-slate-800 tracking-tight">
+              <h2 className="text-lg font-extrabold text-slate-50 tracking-tight">
                 Multi-User Live Cloud Sync
               </h2>
-              <p className="text-xs text-slate-500 font-medium">
+              <p className="text-xs text-slate-400 font-medium">
                 Sync items &amp; task assignments in real-time across all users &amp; phones
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-200/60 transition"
+            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-white/10 transition"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Status Alert */}
-        <div className="p-4 border-b border-slate-100">
+        <div className="p-4 border-b border-white/10">
           <div className={`p-3.5 rounded-xl flex items-start gap-2.5 text-xs font-semibold ${
             connectionStatus.connected
-              ? 'bg-emerald-50/90 text-emerald-900 border border-emerald-200'
-              : 'bg-amber-50/90 text-amber-950 border border-amber-200'
+              ? 'bg-emerald-950/60 text-emerald-200 border border-emerald-500/30'
+              : 'bg-amber-950/60 text-amber-200 border border-amber-500/30'
           }`}>
             {connectionStatus.connected ? (
-              <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+              <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
             ) : (
-              <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
             )}
             <div className="flex-1">
               <span className="font-extrabold">
@@ -143,13 +143,13 @@ export default function CloudSyncModal({
         </div>
 
         {/* Tabs: Quick Setup vs Guide */}
-        <div className="px-5 pt-3 flex gap-2 border-b border-slate-100">
+        <div className="px-5 pt-3 flex gap-2 border-b border-white/10">
           <button
             onClick={() => setActiveTab('quick')}
             className={`pb-2.5 px-3 text-xs font-bold border-b-2 transition ${
               activeTab === 'quick'
-                ? 'border-emerald-600 text-emerald-700'
-                : 'border-transparent text-slate-500 hover:text-slate-700'
+                ? 'border-indigo-400 text-indigo-300'
+                : 'border-transparent text-slate-400 hover:text-white'
             }`}
           >
             ⚡ Connect Database
@@ -158,8 +158,8 @@ export default function CloudSyncModal({
             onClick={() => setActiveTab('guide')}
             className={`pb-2.5 px-3 text-xs font-bold border-b-2 transition ${
               activeTab === 'guide'
-                ? 'border-emerald-600 text-emerald-700'
-                : 'border-transparent text-slate-500 hover:text-slate-700'
+                ? 'border-indigo-400 text-indigo-300'
+                : 'border-transparent text-slate-400 hover:text-white'
             }`}
           >
             📖 60-Second Free Setup Guide
@@ -169,13 +169,13 @@ export default function CloudSyncModal({
         {/* Tab 1: Connect Form */}
         {activeTab === 'quick' && (
           <form onSubmit={handleSaveConfig} className="p-5 space-y-4">
-            <p className="text-xs text-slate-600 leading-relaxed font-normal">
+            <p className="text-xs text-slate-300 leading-relaxed font-normal">
               To allow <strong>all users on different phones/laptops</strong> to see and update the list in real-time, connect a free Firebase Realtime Database. Once connected, changes update immediately without refreshing!
             </p>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1 flex items-center gap-1">
-                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1 flex items-center gap-1">
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                 <span>Paste Firebase Config snippet (Auto-Fill)</span>
               </label>
               <textarea
@@ -188,7 +188,7 @@ export default function CloudSyncModal({
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1 flex items-center gap-1">
+              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1 flex items-center gap-1">
                 <Database className="w-3.5 h-3.5 text-slate-400" />
                 <span>Firebase Database URL *</span>
               </label>
@@ -203,7 +203,7 @@ export default function CloudSyncModal({
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1 flex items-center gap-1">
+              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1 flex items-center gap-1">
                 <Key className="w-3.5 h-3.5 text-slate-400" />
                 <span>Firebase API Key *</span>
               </label>
@@ -218,7 +218,7 @@ export default function CloudSyncModal({
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">
                 Project ID (Optional)
               </label>
               <input
@@ -230,12 +230,12 @@ export default function CloudSyncModal({
               />
             </div>
 
-            <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+            <div className="flex items-center justify-between pt-4 border-t border-white/10">
               {connectionStatus.connected ? (
                 <button
                   type="button"
                   onClick={handleDisconnect}
-                  className="px-3 py-2 text-xs font-bold text-red-600 hover:text-red-700 hover:bg-red-50 rounded-xl transition"
+                  className="px-3 py-2 text-xs font-bold text-rose-400 hover:text-rose-300 hover:bg-rose-950/40 rounded-xl transition"
                 >
                   Disconnect Cloud
                 </button>
@@ -247,13 +247,13 @@ export default function CloudSyncModal({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition"
+                  className="px-4 py-2 text-xs font-bold text-slate-300 hover:text-white hover:bg-white/10 rounded-xl transition"
                 >
                   Close
                 </button>
                 <button
                   type="submit"
-                  className="flex items-center gap-1.5 px-5 py-2 text-xs font-bold text-white bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 rounded-xl shadow-md shadow-emerald-600/20 transition"
+                  className="flex items-center gap-1.5 px-5 py-2 text-xs font-bold text-white bg-linear-to-r from-indigo-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 rounded-xl shadow-lg glow-indigo transition"
                 >
                   {saveSuccess ? (
                     <>
@@ -274,19 +274,19 @@ export default function CloudSyncModal({
 
         {/* Tab 2: Step-by-Step Guide */}
         {activeTab === 'guide' && (
-          <div className="p-5 space-y-4 text-xs text-slate-700 leading-relaxed font-normal">
-            <div className="bg-emerald-50/90 p-3 rounded-xl border border-emerald-200 text-emerald-950 font-medium">
+          <div className="p-5 space-y-4 text-xs text-slate-300 leading-relaxed font-normal">
+            <div className="bg-emerald-950/60 p-3.5 rounded-xl border border-emerald-500/30 text-emerald-200 font-medium">
               💡 <strong>Free &amp; Zero-Maintenance:</strong> Google Firebase provides a free Realtime Database with 1GB storage and 100 simultaneous connections, perfect for group grocery &amp; team task tracking.
             </div>
 
-            <ol className="list-decimal pl-5 space-y-2.5">
+            <ol className="list-decimal pl-5 space-y-2.5 text-slate-300">
               <li>
                 Visit{' '}
                 <a
                   href="https://console.firebase.google.com"
                   target="_blank"
                   rel="noreferrer"
-                  className="text-emerald-600 font-bold underline inline-flex items-center gap-0.5"
+                  className="text-indigo-400 font-bold underline inline-flex items-center gap-0.5"
                 >
                   console.firebase.google.com <ExternalLink className="w-3 h-3" />
                 </a>{' '}
