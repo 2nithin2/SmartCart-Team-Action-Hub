@@ -16,6 +16,7 @@ import {
   importAllData,
   resetAllToDefaults
 } from './services/syncService';
+import { normalizeItem } from './data/seedItems';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dmart'); // 'dmart' | 'clothing' | 'tasks'
@@ -49,10 +50,10 @@ export default function App() {
   useEffect(() => {
     const unsubscribe = subscribeToSync({
       onItemsChange: (newItems) => {
-        setItems(newItems);
+        setItems(newItems.map(normalizeItem));
       },
       onClothingChange: (newClothing) => {
-        setClothingItems(newClothing);
+        setClothingItems(newClothing.map(normalizeItem));
       },
       onTasksChange: (newTasks) => {
         setTasks(newTasks);
@@ -104,38 +105,44 @@ export default function App() {
 
   // Grocery Handlers
   const handleAddItem = async (newItem) => {
-    const updated = [newItem, ...items];
+    const normalized = normalizeItem(newItem, items.length);
+    const updated = [normalized, ...items];
     setItems(updated);
     await syncSaveItems(updated);
   };
 
   const handleUpdateItem = async (updatedItem) => {
-    const updated = items.map((i) => (i.id === updatedItem.id ? updatedItem : i));
+    const normalized = normalizeItem(updatedItem);
+    const targetId = normalized.itemId || normalized.id;
+    const updated = items.map((i) => ((i.itemId === targetId || i.id === targetId) ? normalized : i));
     setItems(updated);
     await syncSaveItems(updated);
   };
 
   const handleDeleteItem = async (itemId) => {
-    const updated = items.filter((i) => i.id !== itemId);
+    const updated = items.filter((i) => (i.itemId !== itemId && i.id !== itemId));
     setItems(updated);
     await syncSaveItems(updated);
   };
 
   // Clothing Handlers
   const handleAddClothing = async (newClothing) => {
-    const updated = [newClothing, ...clothingItems];
+    const normalized = normalizeItem(newClothing, clothingItems.length);
+    const updated = [normalized, ...clothingItems];
     setClothingItems(updated);
     await syncSaveClothing(updated);
   };
 
   const handleUpdateClothing = async (updatedClothing) => {
-    const updated = clothingItems.map((c) => (c.id === updatedClothing.id ? updatedClothing : c));
+    const normalized = normalizeItem(updatedClothing);
+    const targetId = normalized.itemId || normalized.id;
+    const updated = clothingItems.map((c) => ((c.itemId === targetId || c.id === targetId) ? normalized : c));
     setClothingItems(updated);
     await syncSaveClothing(updated);
   };
 
   const handleDeleteClothing = async (clothingId) => {
-    const updated = clothingItems.filter((c) => c.id !== clothingId);
+    const updated = clothingItems.filter((c) => (c.itemId !== clothingId && c.id !== clothingId));
     setClothingItems(updated);
     await syncSaveClothing(updated);
   };
@@ -182,7 +189,7 @@ export default function App() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `smarthub-backup-${new Date().toISOString().split('T')[0]}.json`;
+    link.download = `smartcart-spec-backup-${new Date().toISOString().split('T')[0]}.json`;
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -210,8 +217,8 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col font-sans">
-      {/* Header with Navigation and Sync Status */}
+    <div className="min-h-screen bg-mesh-pattern flex flex-col font-sans selection:bg-emerald-500 selection:text-white">
+      {/* Frosted Header with Navigation and Sync Status */}
       <Header
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -234,7 +241,7 @@ export default function App() {
         className="hidden"
       />
 
-      {/* Main Container */}
+      {/* Main Container with Glassmorphism Theme */}
       <main className="flex-1 max-w-6xl w-full mx-auto px-3 sm:px-4 pt-5">
         {activeTab === 'dmart' && (
           <DmartList
@@ -324,8 +331,8 @@ export default function App() {
         onReconnect={() => setSyncKey((k) => k + 1)}
       />
 
-      {/* Floating Bottom Navigation for Mobile */}
-      <div className="sm:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 py-2 px-4 flex justify-around items-center z-20 shadow-lg">
+      {/* Floating Bottom Navigation for Mobile (Glassmorphic) */}
+      <div className="sm:hidden fixed bottom-0 left-0 right-0 glass-panel bg-white/90 border-t border-slate-200/80 py-2.5 px-4 flex justify-around items-center z-20 shadow-xl">
         <button
           onClick={() => setActiveTab('dmart')}
           className={`flex flex-col items-center gap-0.5 text-[11px] font-bold transition ${
