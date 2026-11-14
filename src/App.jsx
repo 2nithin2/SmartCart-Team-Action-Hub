@@ -17,7 +17,7 @@ import {
   resetAllToDefaults
 } from './services/syncService';
 import { normalizeItem } from './data/seedItems';
-import { haptics } from './utils/haptics';
+import { ShoppingCart, Shirt, Users, Sparkles, TrendingUp } from 'lucide-react';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dmart'); // 'dmart' | 'clothing' | 'tasks'
@@ -106,7 +106,6 @@ export default function App() {
 
   // Grocery Handlers
   const handleAddItem = async (newItem) => {
-    haptics.success();
     const normalized = normalizeItem(newItem, items.length);
     const updated = [normalized, ...items];
     setItems(updated);
@@ -122,7 +121,6 @@ export default function App() {
   };
 
   const handleDeleteItem = async (itemId) => {
-    haptics.warning();
     const updated = items.filter((i) => (i.itemId !== itemId && i.id !== itemId));
     setItems(updated);
     await syncSaveItems(updated);
@@ -130,7 +128,6 @@ export default function App() {
 
   // Clothing Handlers
   const handleAddClothing = async (newClothing) => {
-    haptics.success();
     const normalized = normalizeItem(newClothing, clothingItems.length);
     const updated = [normalized, ...clothingItems];
     setClothingItems(updated);
@@ -146,7 +143,6 @@ export default function App() {
   };
 
   const handleDeleteClothing = async (clothingId) => {
-    haptics.warning();
     const updated = clothingItems.filter((c) => (c.itemId !== clothingId && c.id !== clothingId));
     setClothingItems(updated);
     await syncSaveClothing(updated);
@@ -154,7 +150,6 @@ export default function App() {
 
   // Task Handlers
   const handleAddTask = async (newTask) => {
-    haptics.success();
     const updated = [newTask, ...tasks];
     setTasks(updated);
     await syncSaveTasks(updated);
@@ -167,7 +162,6 @@ export default function App() {
   };
 
   const handleDeleteTask = async (taskId) => {
-    haptics.warning();
     const updated = tasks.filter((t) => t.id !== taskId);
     setTasks(updated);
     await syncSaveTasks(updated);
@@ -176,7 +170,6 @@ export default function App() {
   // Member Handlers
   const handleAddMember = async (name) => {
     if (!name || teamMembers.includes(name)) return;
-    haptics.click();
     const updated = [...teamMembers, name];
     setTeamMembers(updated);
     await syncSaveMembers(updated);
@@ -185,7 +178,6 @@ export default function App() {
   // Reset to original defaults
   const handleResetDefaults = async () => {
     if (window.confirm('Reset everything to original defaults (DMart groceries, clothing list, and group tasks)?')) {
-      haptics.warning();
       await resetAllToDefaults();
       setSyncKey((k) => k + 1);
     }
@@ -193,7 +185,6 @@ export default function App() {
 
   // Export JSON backup
   const handleExportData = () => {
-    haptics.click();
     const jsonStr = exportAllData();
     const blob = new Blob([jsonStr], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -215,11 +206,9 @@ export default function App() {
       if (typeof content === 'string') {
         const res = await importAllData(content);
         if (res.success) {
-          haptics.success();
           alert('Data imported successfully!');
           setSyncKey((k) => k + 1);
         } else {
-          haptics.warning();
           alert(`Import failed: ${res.error}`);
         }
       }
@@ -228,17 +217,23 @@ export default function App() {
     e.target.value = '';
   };
 
-  // Determine active dark theme class
-  const activeThemeClass = 
-    activeTab === 'dmart' 
-      ? 'theme-dmart' 
-      : activeTab === 'clothing' 
-      ? 'theme-clothing' 
-      : 'theme-tasks';
-
   return (
-    <div className={`min-h-screen flex flex-col font-sans selection:bg-emerald-500 selection:text-white transition-colors duration-500 ${activeThemeClass}`}>
-      {/* Frosted Header with Navigation and Sync Status */}
+    <div className="relative min-h-screen flex flex-col font-sans selection:bg-emerald-500 selection:text-white">
+      {/* 🌈 RADIANT AMBIENT GLOW ORBS (Provides the vibrant backdrop for Glassmorphism) */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+        {/* Emerald Glow Top-Left */}
+        <div className="absolute -top-32 -left-32 w-[34rem] h-[34rem] bg-emerald-400/30 rounded-full blur-[100px] animate-pulse-slow"></div>
+        {/* Indigo Glow Top-Right */}
+        <div className="absolute top-10 -right-28 w-[32rem] h-[32rem] bg-indigo-500/25 rounded-full blur-[110px] animate-float"></div>
+        {/* Rose Glow Center-Right */}
+        <div className="absolute top-[40%] right-[10%] w-[28rem] h-[28rem] bg-pink-400/20 rounded-full blur-[100px]"></div>
+        {/* Amber / Yellow Glow Bottom-Left */}
+        <div className="absolute bottom-10 left-[15%] w-[30rem] h-[30rem] bg-amber-400/20 rounded-full blur-[100px] animate-pulse-slow"></div>
+        {/* Teal Glow Bottom-Right */}
+        <div className="absolute -bottom-20 -right-20 w-[28rem] h-[28rem] bg-teal-400/25 rounded-full blur-[90px]"></div>
+      </div>
+
+      {/* Frosted Glass Header */}
       <Header
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -261,9 +256,99 @@ export default function App() {
         className="hidden"
       />
 
-      {/* Main Container - Focused exclusively on the selected cart (isolated per user request) */}
-      <main className="flex-1 max-w-6xl w-full mx-auto px-3 sm:px-4 pt-4 pb-8">
-        {/* Only the selected cart is rendered */}
+      {/* Main Glassmorphic Container */}
+      <main className="flex-1 max-w-6xl w-full mx-auto px-3 sm:px-4 pt-5 pb-8">
+        {/* 🌟 Stylish Landing Page Hub Overview Hero Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
+          {/* Card 1: Groceries */}
+          <button
+            onClick={() => setActiveTab('dmart')}
+            className={`glass-card glass-card-hover rounded-2xl p-4 text-left transition-all relative overflow-hidden group ${
+              activeTab === 'dmart' ? 'ring-2 ring-emerald-500/60 shadow-lg glow-emerald' : ''
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <span className="p-2.5 rounded-xl bg-emerald-500/15 text-emerald-700">
+                <ShoppingCart className="w-5 h-5" />
+              </span>
+              <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                {itemsCount.pending} To Buy
+              </span>
+            </div>
+            <h3 className="text-base font-extrabold text-slate-800 mt-2.5 group-hover:text-emerald-700 transition">
+              DMart Grocery Cart
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              1st &amp; 2nd Floor staples, spices &amp; household
+            </p>
+            <div className="mt-3 flex items-center justify-between text-xs font-bold text-emerald-700">
+              <span>{itemsCount.completed} / {itemsCount.total} Picked</span>
+              <span className="text-[11px] opacity-75">
+                {itemsCount.total > 0 ? Math.round((itemsCount.completed / itemsCount.total) * 100) : 0}%
+              </span>
+            </div>
+          </button>
+
+          {/* Card 2: Dressing */}
+          <button
+            onClick={() => setActiveTab('clothing')}
+            className={`glass-card glass-card-hover rounded-2xl p-4 text-left transition-all relative overflow-hidden group ${
+              activeTab === 'clothing' ? 'ring-2 ring-pink-500/60 shadow-lg glow-pink' : ''
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <span className="p-2.5 rounded-xl bg-pink-500/15 text-pink-700">
+                <Shirt className="w-5 h-5" />
+              </span>
+              <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-pink-100 text-pink-800">
+                {clothingCount.pending} In Cart
+              </span>
+            </div>
+            <h3 className="text-base font-extrabold text-slate-800 mt-2.5 group-hover:text-pink-700 transition">
+              Dressing &amp; Apparel Cart
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Sizes, colors &amp; trial room fitting status
+            </p>
+            <div className="mt-3 flex items-center justify-between text-xs font-bold text-pink-700">
+              <span>{clothingCount.purchased} / {clothingCount.total} Bought</span>
+              <span className="text-[11px] opacity-75">
+                {clothingCount.total > 0 ? Math.round((clothingCount.purchased / clothingCount.total) * 100) : 0}%
+              </span>
+            </div>
+          </button>
+
+          {/* Card 3: Group Tasks */}
+          <button
+            onClick={() => setActiveTab('tasks')}
+            className={`glass-card glass-card-hover rounded-2xl p-4 text-left transition-all relative overflow-hidden group ${
+              activeTab === 'tasks' ? 'ring-2 ring-indigo-500/60 shadow-lg glow-indigo' : ''
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <span className="p-2.5 rounded-xl bg-indigo-500/15 text-indigo-700">
+                <Users className="w-5 h-5" />
+              </span>
+              <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800">
+                {tasksCount.pending} Open
+              </span>
+            </div>
+            <h3 className="text-base font-extrabold text-slate-800 mt-2.5 group-hover:text-indigo-700 transition">
+              Group Action &amp; Tasks
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Assigned follow-ups, price checks &amp; billing
+            </p>
+            <div className="mt-3 flex items-center justify-between text-xs font-bold text-indigo-700">
+              <span>{teamMembers.length} Collaborators</span>
+              <span className="text-[11px] opacity-75">
+                {tasksCount.total - tasksCount.pending} Done
+              </span>
+            </div>
+          </button>
+        </div>
+
+        {/* Tab Views */}
         {activeTab === 'dmart' && (
           <DmartList
             items={items}
@@ -271,12 +356,10 @@ export default function App() {
             onDeleteItem={handleDeleteItem}
             onAddItem={handleAddItem}
             onOpenAddModal={() => {
-              haptics.click();
               setItemToEdit(null);
               setIsItemModalOpen(true);
             }}
             onOpenEditModal={(item) => {
-              haptics.click();
               setItemToEdit(item);
               setIsItemModalOpen(true);
             }}
@@ -292,12 +375,10 @@ export default function App() {
             onDeleteClothing={handleDeleteClothing}
             onAddClothing={handleAddClothing}
             onOpenAddModal={() => {
-              haptics.click();
               setClothingToEdit(null);
               setIsClothingModalOpen(true);
             }}
             onOpenEditModal={(clothing) => {
-              haptics.click();
               setClothingToEdit(clothing);
               setIsClothingModalOpen(true);
             }}
@@ -356,49 +437,40 @@ export default function App() {
         onReconnect={() => setSyncKey((k) => k + 1)}
       />
 
-      {/* Floating Bottom Navigation for Mobile (Glassmorphic & Haptic) */}
-      <div className="sm:hidden fixed bottom-0 left-0 right-0 dark-glass-header border-t border-white/10 py-2.5 px-4 flex justify-around items-center z-20 shadow-2xl backdrop-blur-2xl">
+      {/* Floating Bottom Navigation for Mobile (Glassmorphic) */}
+      <div className="sm:hidden fixed bottom-0 left-0 right-0 glass-panel bg-white/90 border-t border-slate-200/80 py-2.5 px-4 flex justify-around items-center z-20 shadow-xl">
         <button
-          onClick={() => {
-            haptics.selection();
-            setActiveTab('dmart');
-          }}
-          className={`flex flex-col items-center gap-0.5 text-[11px] font-black transition-all ${
-            activeTab === 'dmart' ? 'text-emerald-400 scale-105' : 'text-slate-400 opacity-60'
+          onClick={() => setActiveTab('dmart')}
+          className={`flex flex-col items-center gap-0.5 text-[11px] font-bold transition ${
+            activeTab === 'dmart' ? 'text-emerald-700' : 'text-slate-500'
           }`}
         >
           <span>🛒 DMart</span>
-          <span className="text-[10px] px-1.5 rounded-full bg-emerald-950/80 text-emerald-300 border border-emerald-500/30 font-extrabold">{itemsCount.pending}</span>
+          <span className="text-[10px] opacity-75">{itemsCount.pending}</span>
         </button>
 
-        <div className="h-6 w-px bg-white/10" />
+        <div className="h-6 w-px bg-slate-200" />
 
         <button
-          onClick={() => {
-            haptics.selection();
-            setActiveTab('clothing');
-          }}
-          className={`flex flex-col items-center gap-0.5 text-[11px] font-black transition-all ${
-            activeTab === 'clothing' ? 'text-pink-400 scale-105' : 'text-slate-400 opacity-60'
+          onClick={() => setActiveTab('clothing')}
+          className={`flex flex-col items-center gap-0.5 text-[11px] font-bold transition ${
+            activeTab === 'clothing' ? 'text-pink-600' : 'text-slate-500'
           }`}
         >
           <span>👗 Clothes</span>
-          <span className="text-[10px] px-1.5 rounded-full bg-pink-950/80 text-pink-300 border border-pink-500/30 font-extrabold">{clothingCount.pending}</span>
+          <span className="text-[10px] opacity-75">{clothingCount.pending}</span>
         </button>
 
-        <div className="h-6 w-px bg-white/10" />
+        <div className="h-6 w-px bg-slate-200" />
 
         <button
-          onClick={() => {
-            haptics.selection();
-            setActiveTab('tasks');
-          }}
-          className={`flex flex-col items-center gap-0.5 text-[11px] font-black transition-all ${
-            activeTab === 'tasks' ? 'text-indigo-400 scale-105' : 'text-slate-400 opacity-60'
+          onClick={() => setActiveTab('tasks')}
+          className={`flex flex-col items-center gap-0.5 text-[11px] font-bold transition ${
+            activeTab === 'tasks' ? 'text-indigo-700' : 'text-slate-500'
           }`}
         >
           <span>👥 Tasks</span>
-          <span className="text-[10px] px-1.5 rounded-full bg-indigo-950/80 text-indigo-300 border border-indigo-500/30 font-extrabold">{tasksCount.pending}</span>
+          <span className="text-[10px] opacity-75">{tasksCount.pending}</span>
         </button>
       </div>
     </div>

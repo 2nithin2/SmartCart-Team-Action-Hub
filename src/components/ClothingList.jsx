@@ -4,25 +4,12 @@ import {
   Shirt, User, Sparkles, Minus, Copy, CheckCheck, Tag, Palette,
   ShoppingBag
 } from 'lucide-react';
-import { haptics } from '../utils/haptics';
 
 const TRIAL_STATUS_MAP = {
-  pending_trial: { 
-    label: '⏳ Needs Trial Room', 
-    bg: 'bg-amber-950/70 text-amber-200 border-amber-500/50' 
-  },
-  fitting_checked: { 
-    label: '👍 Fitting Checked', 
-    bg: 'bg-sky-950/70 text-sky-200 border-sky-500/50' 
-  },
-  in_cart: { 
-    label: '🛒 In Cart (To Buy)', 
-    bg: 'bg-fuchsia-950/70 text-fuchsia-200 border-fuchsia-500/50' 
-  },
-  purchased: { 
-    label: '✅ Purchased', 
-    bg: 'bg-emerald-950/70 text-emerald-200 border-emerald-500/50' 
-  }
+  pending_trial: { label: '⏳ Needs Trial Room', bg: 'bg-amber-100/80 text-amber-900 border-amber-300/60' },
+  fitting_checked: { label: '👍 Fitting Checked', bg: 'bg-blue-100/80 text-blue-900 border-blue-300/60' },
+  in_cart: { label: '🛒 In Cart (To Buy)', bg: 'bg-purple-100/80 text-purple-900 border-purple-300/60' },
+  purchased: { label: '✅ Purchased', bg: 'bg-emerald-100/80 text-emerald-900 border-emerald-300/60' }
 };
 
 export default function ClothingList({
@@ -89,7 +76,6 @@ export default function ClothingList({
 
   // Stepper increment/decrement
   const handleQtyChange = (item, delta) => {
-    haptics.tick();
     const currentQtyNum = parseFloat(item.quantity || item.qty) || 1;
     const nextQty = Math.max(1, currentQtyNum + delta);
     onUpdateClothing({
@@ -102,13 +88,7 @@ export default function ClothingList({
 
   // Toggle purchased status
   const handleTogglePurchased = (item) => {
-    const isCurrentlyPurchased = item.trialStatus === 'purchased';
-    if (!isCurrentlyPurchased) {
-      haptics.success();
-    } else {
-      haptics.tick();
-    }
-    const nextTrial = isCurrentlyPurchased ? 'in_cart' : 'purchased';
+    const nextTrial = item.trialStatus === 'purchased' ? 'in_cart' : 'purchased';
     onUpdateClothing({
       ...item,
       trialStatus: nextTrial,
@@ -122,7 +102,6 @@ export default function ClothingList({
     e.preventDefault();
     if (!quickName.trim()) return;
 
-    haptics.click();
     const newItem = {
       itemId: `cl_${Date.now()}`,
       id: `cl_${Date.now()}`,
@@ -153,7 +132,6 @@ export default function ClothingList({
 
   // WhatsApp formatted clipboard copy
   const handleCopyForWhatsApp = () => {
-    haptics.click();
     let text = `👗 *SmartCart - Dressing & Clothing Shopping List*\n\n`;
     teamMembers.forEach((member) => {
       const memberClothes = clothingItems.filter((c) => (c.assignee === member || c.assignedTo === member));
@@ -179,24 +157,19 @@ export default function ClothingList({
   };
 
   return (
-    <div className="space-y-4 pb-16">
-      {/* 🌹 Deep Velvet Plum / Rose Header & Stats Card */}
-      <div className="dark-glass-card rounded-2xl p-4 sm:p-5 border-pink-500/30 shadow-2xl">
+    <div className="space-y-5 pb-16">
+      {/* Top Banner / Progress Header with Glassmorphism */}
+      <div className="glass-card rounded-2xl p-4 sm:p-5">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <span className="p-3 bg-pink-500/20 text-pink-300 rounded-2xl border border-pink-500/40 shadow-inner">
-              <Shirt className="w-6 h-6 text-pink-400 animate-pulse-subtle" />
+            <span className="p-2.5 bg-pink-100/90 text-pink-700 rounded-xl shadow-xs">
+              <Shirt className="w-5 h-5" />
             </span>
             <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight drop-shadow-sm">
-                  Dressing &amp; Clothing Cart
-                </h2>
-                <span className="px-2.5 py-0.5 text-[10px] font-black uppercase rounded-full bg-pink-500/30 text-pink-300 border border-pink-400/40">
-                  Plum Velvet Studio
-                </span>
-              </div>
-              <p className="text-xs text-pink-200/80 mt-0.5 font-medium">
+              <h2 className="text-xl font-extrabold text-slate-800 tracking-tight">
+                Dressing &amp; Clothing Shopping Cart
+              </h2>
+              <p className="text-xs text-slate-500 font-medium mt-0.5">
                 Size measurements (S/M/L/waist) • Trial room fitting status • Delegated by person
               </p>
             </div>
@@ -205,27 +178,24 @@ export default function ClothingList({
           <div className="flex items-center gap-2 self-stretch sm:self-auto">
             <button
               onClick={handleCopyForWhatsApp}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs font-bold text-pink-100 bg-pink-950/50 hover:bg-pink-900/60 border border-pink-500/40 rounded-xl shadow-xs transition hover-wiggle"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs font-bold text-slate-700 bg-white/80 hover:bg-white border border-slate-200 rounded-xl shadow-xs transition"
             >
               {copiedNotification ? (
                 <>
-                  <CheckCheck className="w-4 h-4 text-emerald-400" />
-                  <span className="text-emerald-300">Copied!</span>
+                  <CheckCheck className="w-4 h-4 text-emerald-600" />
+                  <span className="text-emerald-700">Copied!</span>
                 </>
               ) : (
                 <>
-                  <Copy className="w-4 h-4 text-pink-300" />
+                  <Copy className="w-4 h-4 text-slate-500" />
                   <span>Copy for WhatsApp</span>
                 </>
               )}
             </button>
 
             <button
-              onClick={() => {
-                haptics.click();
-                onOpenAddModal();
-              }}
-              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 text-xs sm:text-sm font-bold text-white bg-linear-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 rounded-xl shadow-lg shadow-pink-900/40 transition hover-wiggle"
+              onClick={() => onOpenAddModal()}
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 text-xs sm:text-sm font-bold text-white bg-linear-to-r from-pink-600 to-rose-600 hover:from-pink-700 hover:to-rose-700 rounded-xl shadow-md shadow-pink-600/20 transition"
             >
               <Plus className="w-4 h-4" />
               <span>+ Add Clothing Item</span>
@@ -233,31 +203,31 @@ export default function ClothingList({
           </div>
         </div>
 
-        {/* Status Counters with Dark Frosted Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-4 pt-3.5 border-t border-pink-500/20">
-          <div className="p-3 dark-glass-card rounded-xl border border-pink-500/20 shadow-xs">
-            <div className="text-[11px] text-pink-300/80 font-bold uppercase tracking-wider">Total Clothes</div>
-            <div className="text-2xl font-black text-white mt-0.5">{stats.total}</div>
+        {/* Status Counters with Glass Cards */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-4 pt-3.5 border-t border-slate-200/60">
+          <div className="p-3 bg-white/70 rounded-xl border border-white/80 shadow-2xs">
+            <div className="text-[11px] text-slate-500 font-bold uppercase tracking-wider">Total Clothes</div>
+            <div className="text-xl font-black text-slate-800 mt-0.5">{stats.total}</div>
           </div>
-          <div className="p-3 bg-amber-950/40 rounded-xl border border-amber-500/30 shadow-xs">
-            <div className="text-[11px] text-amber-300 font-bold uppercase tracking-wider">Needs Trial Room</div>
-            <div className="text-2xl font-black text-amber-200 mt-0.5">{stats.inTrial}</div>
+          <div className="p-3 bg-amber-50/70 rounded-xl border border-amber-200/60 shadow-2xs">
+            <div className="text-[11px] text-amber-800 font-bold uppercase tracking-wider">Needs Trial Room</div>
+            <div className="text-xl font-black text-amber-900 mt-0.5">{stats.inTrial}</div>
           </div>
-          <div className="p-3 bg-purple-950/40 rounded-xl border border-purple-500/30 shadow-xs">
-            <div className="text-[11px] text-purple-300 font-bold uppercase tracking-wider">In Cart (Ready)</div>
-            <div className="text-2xl font-black text-purple-200 mt-0.5">{stats.inCart}</div>
+          <div className="p-3 bg-purple-50/70 rounded-xl border border-purple-200/60 shadow-2xs">
+            <div className="text-[11px] text-purple-800 font-bold uppercase tracking-wider">In Cart (Ready)</div>
+            <div className="text-xl font-black text-purple-900 mt-0.5">{stats.inCart}</div>
           </div>
-          <div className="p-3 bg-emerald-950/40 rounded-xl border border-emerald-500/30 shadow-xs">
-            <div className="text-[11px] text-emerald-300 font-bold uppercase tracking-wider">Purchased</div>
-            <div className="text-2xl font-black text-emerald-200 mt-0.5">{stats.purchased}</div>
+          <div className="p-3 bg-emerald-50/70 rounded-xl border border-emerald-200/60 shadow-2xs">
+            <div className="text-[11px] text-emerald-800 font-bold uppercase tracking-wider">Purchased</div>
+            <div className="text-xl font-black text-emerald-900 mt-0.5">{stats.purchased}</div>
           </div>
         </div>
       </div>
 
       {/* Quick Add Bar for Clothes */}
-      <div className="dark-glass-card rounded-2xl p-4 border border-pink-500/30 shadow-lg">
-        <div className="text-xs font-bold text-pink-300 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-          <Sparkles className="w-4 h-4 text-pink-400" />
+      <div className="glass-card rounded-2xl p-4 border border-pink-400/30">
+        <div className="text-xs font-bold text-pink-950 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+          <Sparkles className="w-4 h-4 text-pink-600" />
           <span>Quick Add Dress / Clothing (Size, Color, For Person)</span>
         </div>
         <form onSubmit={handleQuickAdd} className="grid grid-cols-2 sm:grid-cols-12 gap-2.5">
@@ -267,7 +237,7 @@ export default function ClothingList({
               placeholder="Item (Formal Shirt, Kurti, Jeans...)"
               value={quickName}
               onChange={(e) => setQuickName(e.target.value)}
-              className="dark-glass-input w-full px-3.5 py-2 text-sm rounded-xl font-medium focus:outline-none"
+              className="glass-input w-full px-3.5 py-2 text-sm rounded-xl font-medium focus:outline-none"
               required
             />
           </div>
@@ -276,10 +246,10 @@ export default function ClothingList({
             <select
               value={quickSection}
               onChange={(e) => setQuickSection(e.target.value)}
-              className="dark-glass-input w-full px-2.5 py-2 text-xs font-semibold rounded-xl focus:outline-none"
+              className="glass-input w-full px-2.5 py-2 text-xs font-semibold rounded-xl focus:outline-none bg-white/90"
             >
               {sections.map((s) => (
-                <option key={s} value={s} className="bg-slate-900 text-white">{s}</option>
+                <option key={s} value={s}>{s}</option>
               ))}
             </select>
           </div>
@@ -290,7 +260,7 @@ export default function ClothingList({
               placeholder="Size (S/M/L/32/38)"
               value={quickSize}
               onChange={(e) => setQuickSize(e.target.value)}
-              className="dark-glass-input w-full px-3 py-2 text-sm rounded-xl font-bold focus:outline-none"
+              className="glass-input w-full px-3 py-2 text-sm rounded-xl font-bold focus:outline-none"
             />
           </div>
 
@@ -300,7 +270,7 @@ export default function ClothingList({
               placeholder="Color (Blue, Maroon...)"
               value={quickColor}
               onChange={(e) => setQuickColor(e.target.value)}
-              className="dark-glass-input w-full px-3 py-2 text-sm rounded-xl focus:outline-none"
+              className="glass-input w-full px-3 py-2 text-sm rounded-xl focus:outline-none"
             />
           </div>
 
@@ -308,16 +278,16 @@ export default function ClothingList({
             <select
               value={quickPerson}
               onChange={(e) => setQuickPerson(e.target.value)}
-              className="dark-glass-input w-full px-2 py-2 text-xs font-semibold rounded-xl focus:outline-none truncate"
+              className="glass-input w-full px-2 py-2 text-xs font-semibold rounded-xl focus:outline-none bg-white/90 truncate"
             >
-              <option value="Unassigned" className="bg-slate-900 text-white">👤 Unassigned</option>
+              <option value="Unassigned">👤 Unassigned</option>
               {teamMembers.map((m) => (
-                <option key={m} value={m} className="bg-slate-900 text-white">👤 {m}</option>
+                <option key={m} value={m}>👤 {m}</option>
               ))}
             </select>
             <button
               type="submit"
-              className="px-3.5 py-2 bg-pink-600 hover:bg-pink-500 text-white font-bold rounded-xl text-sm transition shadow-md hover-wiggle flex items-center justify-center shrink-0"
+              className="px-3.5 py-2 bg-pink-600 hover:bg-pink-700 text-white font-bold rounded-xl text-sm transition shadow-sm flex items-center justify-center shrink-0"
               title="Add Clothing"
             >
               <Plus className="w-5 h-5" />
@@ -327,40 +297,34 @@ export default function ClothingList({
       </div>
 
       {/* Filter and Search Toolbar */}
-      <div className="dark-glass-card rounded-2xl p-4 space-y-3.5 border-pink-500/20">
+      <div className="glass-card rounded-2xl p-4 space-y-3.5">
         <div className="relative">
-          <Search className="w-4 h-4 absolute left-3.5 top-3 text-pink-300/60" />
+          <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
           <input
             type="text"
             placeholder="Search clothes by name, size, color, brand, or person..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="dark-glass-input w-full pl-10 pr-16 py-2.5 text-sm rounded-xl focus:outline-none font-medium"
+            className="glass-input w-full pl-10 pr-16 py-2.5 text-sm rounded-xl focus:outline-none font-medium"
           />
           {search && (
             <button
-              onClick={() => {
-                haptics.tick();
-                setSearch('');
-              }}
-              className="absolute right-3.5 top-2.5 text-xs font-semibold text-pink-300 hover:text-white bg-pink-900/40 px-2 py-0.5 rounded-md"
+              onClick={() => setSearch('')}
+              className="absolute right-3.5 top-2.5 text-xs font-semibold text-slate-400 hover:text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md"
             >
               Clear
             </button>
           )}
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-2.5 pt-1 border-t border-pink-500/20">
+        <div className="flex flex-wrap items-center justify-between gap-2.5 pt-1 border-t border-slate-200/60">
           <div className="flex flex-wrap items-center gap-1.5">
             <button
-              onClick={() => {
-                haptics.selection();
-                setSelectedSection('All');
-              }}
+              onClick={() => setSelectedSection('All')}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition shadow-xs ${
                 selectedSection === 'All'
-                  ? 'bg-pink-600 text-white shadow-md shadow-pink-600/30 border border-pink-400/50'
-                  : 'bg-pink-950/40 text-pink-200 hover:bg-pink-900/60 border border-pink-500/30'
+                  ? 'bg-slate-900 text-white'
+                  : 'bg-white/80 text-slate-700 hover:bg-white border border-slate-200'
               }`}
             >
               All Sections ({clothingItems.length})
@@ -370,19 +334,16 @@ export default function ClothingList({
               return (
                 <button
                   key={sec}
-                  onClick={() => {
-                    haptics.selection();
-                    setSelectedSection(sec);
-                  }}
+                  onClick={() => setSelectedSection(sec)}
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
                     selectedSection === sec
-                      ? 'bg-pink-600 text-white shadow-md shadow-pink-600/30 border border-pink-400/50'
-                      : 'bg-pink-950/40 text-pink-200 hover:bg-pink-900/60 border border-pink-500/30'
+                      ? 'bg-pink-600 text-white shadow-md shadow-pink-600/20'
+                      : 'bg-pink-50/80 text-pink-900 hover:bg-pink-100 border border-pink-200/60'
                   }`}
                 >
                   <span>{sec}</span>
                   <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
-                    selectedSection === sec ? 'bg-pink-700 text-white' : 'bg-pink-900/80 text-pink-200'
+                    selectedSection === sec ? 'bg-pink-700 text-white' : 'bg-pink-200/80 text-pink-900'
                   }`}>
                     {count}
                   </span>
@@ -394,31 +355,25 @@ export default function ClothingList({
           <div className="flex items-center gap-2">
             <select
               value={selectedPerson}
-              onChange={(e) => {
-                haptics.selection();
-                setSelectedPerson(e.target.value);
-              }}
-              className="dark-glass-input px-3 py-1.5 text-xs rounded-xl font-bold text-pink-100"
+              onChange={(e) => setSelectedPerson(e.target.value)}
+              className="glass-input px-3 py-1.5 text-xs rounded-xl font-bold text-slate-700 bg-white/90"
             >
-              <option value="all" className="bg-slate-900 text-white">For Person: All</option>
+              <option value="all">For Person: All</option>
               {teamMembers.map((m) => (
-                <option key={m} value={m} className="bg-slate-900 text-white">👤 {m}</option>
+                <option key={m} value={m}>👤 {m}</option>
               ))}
             </select>
 
             <select
               value={trialFilter}
-              onChange={(e) => {
-                haptics.selection();
-                setTrialFilter(e.target.value);
-              }}
-              className="dark-glass-input px-3 py-1.5 text-xs rounded-xl font-bold text-pink-100"
+              onChange={(e) => setTrialFilter(e.target.value)}
+              className="glass-input px-3 py-1.5 text-xs rounded-xl font-bold text-slate-700 bg-white/90"
             >
-              <option value="all" className="bg-slate-900 text-white">Trial Status: All</option>
-              <option value="pending_trial" className="bg-slate-900 text-white">Needs Trial Room</option>
-              <option value="fitting_checked" className="bg-slate-900 text-white">Fitting OK</option>
-              <option value="in_cart" className="bg-slate-900 text-white">In Cart</option>
-              <option value="purchased" className="bg-slate-900 text-white">Purchased</option>
+              <option value="all">Trial Status: All</option>
+              <option value="pending_trial">Needs Trial Room</option>
+              <option value="fitting_checked">Fitting OK</option>
+              <option value="in_cart">In Cart</option>
+              <option value="purchased">Purchased</option>
             </select>
           </div>
         </div>
@@ -426,21 +381,20 @@ export default function ClothingList({
 
       {/* Clothing List Cards with Glassmorphism */}
       {filteredClothing.length === 0 ? (
-        <div className="dark-glass-card rounded-2xl p-12 text-center border-pink-500/20">
-          <Shirt className="w-12 h-12 text-pink-300/40 mx-auto mb-3" />
-          <h3 className="text-base font-bold text-white">No clothing items match</h3>
-          <p className="text-xs text-pink-200/70 mt-1">
+        <div className="glass-card rounded-2xl p-12 text-center">
+          <Shirt className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+          <h3 className="text-base font-bold text-slate-700">No clothing items match</h3>
+          <p className="text-xs text-slate-500 mt-1">
             Try resetting your search query or switching section filters.
           </p>
           <button
             onClick={() => {
-              haptics.click();
               setSearch('');
               setSelectedSection('All');
               setSelectedPerson('all');
               setTrialFilter('all');
             }}
-            className="mt-4 px-4 py-2 bg-pink-600 hover:bg-pink-500 text-white rounded-xl text-xs font-bold transition shadow-md"
+            className="mt-4 px-4 py-2 bg-slate-900 text-white hover:bg-slate-800 rounded-xl text-xs font-bold"
           >
             Reset Filters
           </button>
@@ -455,20 +409,20 @@ export default function ClothingList({
             return (
               <div
                 key={item.itemId || item.id}
-                className={`dark-glass-card rounded-2xl p-4 sm:p-5 flex flex-col justify-between gap-3 transition-all duration-200 border-pink-500/25 hover:border-pink-500/50 ${
+                className={`glass-card glass-card-hover rounded-2xl p-4 flex flex-col justify-between gap-3 ${
                   isPurchased
-                    ? 'opacity-60 bg-pink-950/20'
-                    : 'shadow-lg hover:shadow-pink-900/20'
+                    ? 'opacity-65'
+                    : 'border-white/80'
                 }`}
               >
                 <div>
                   <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                    <span className="text-[11px] font-extrabold px-2.5 py-0.5 rounded-lg bg-pink-950/80 text-pink-200 border border-pink-500/40">
+                    <span className="text-[11px] font-extrabold px-2.5 py-0.5 rounded-lg bg-pink-100/80 text-pink-800 border border-pink-200">
                       {item.section}
                     </span>
 
-                    <span className="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-indigo-950/80 text-indigo-200 border border-indigo-500/40 flex items-center gap-1">
-                      <User className="w-3 h-3 text-indigo-400" />
+                    <span className="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200/70 flex items-center gap-1">
+                      <User className="w-3 h-3" />
                       <span>For: {assigneeName}</span>
                     </span>
                   </div>
@@ -478,52 +432,52 @@ export default function ClothingList({
                       onClick={() => handleTogglePurchased(item)}
                       className={`mt-0.5 p-1 rounded-lg transition shrink-0 ${
                         isPurchased
-                          ? 'text-emerald-400 bg-emerald-950/60 border border-emerald-500/40'
-                          : 'text-pink-300/60 hover:text-pink-200 bg-white/5 border border-white/10 hover-wiggle'
+                          ? 'text-emerald-600 bg-emerald-50'
+                          : 'text-slate-400 hover:text-pink-600 bg-slate-100'
                       }`}
                       title={isPurchased ? 'Mark as Not Purchased' : 'Mark as Purchased'}
                     >
                       {isPurchased ? (
-                        <CheckSquare className="w-5 h-5 text-emerald-400 animate-icon-pop" />
+                        <CheckSquare className="w-5 h-5 text-emerald-600 fill-emerald-100" />
                       ) : (
                         <Square className="w-5 h-5" />
                       )}
                     </button>
 
                     <div className="min-w-0 flex-1">
-                      <h3 className={`text-base font-extrabold tracking-tight ${
-                        isPurchased ? 'line-through text-slate-400' : 'text-white'
+                      <h3 className={`text-base font-extrabold ${
+                        isPurchased ? 'line-through text-slate-400' : 'text-slate-900'
                       }`}>
                         {item.name}
                       </h3>
 
                       <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                        <span className="text-xs font-extrabold px-2.5 py-1 rounded-lg bg-pink-950/60 text-pink-100 border border-pink-500/40 shadow-xs">
+                        <span className="text-xs font-extrabold px-2.5 py-1 rounded-lg bg-white/90 text-slate-800 border border-slate-200 shadow-2xs">
                           📏 Size: {item.size || item.sizeSpec}
                         </span>
 
                         {item.color && (
-                          <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-rose-950/60 text-rose-200 border border-rose-500/40 flex items-center gap-1 shadow-xs">
-                            <Palette className="w-3 h-3 text-rose-400" />
+                          <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-pink-50 text-pink-900 border border-pink-200 flex items-center gap-1 shadow-2xs">
+                            <Palette className="w-3 h-3 text-pink-600" />
                             <span>{item.color}</span>
                           </span>
                         )}
 
                         {item.brand && (
-                          <span className="text-xs font-semibold px-2 py-1 rounded-lg bg-slate-800/80 text-slate-300 border border-slate-700/60 shadow-xs">
+                          <span className="text-xs font-semibold px-2 py-1 rounded-lg bg-slate-100 text-slate-600 border border-slate-200 shadow-2xs">
                             🏷️ {item.brand}
                           </span>
                         )}
 
                         {item.priceEstimate && (
-                          <span className="text-xs font-bold px-2 py-1 rounded-lg bg-emerald-950/60 text-emerald-300 border border-emerald-500/40 shadow-xs">
+                          <span className="text-xs font-bold px-2 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-2xs">
                             {item.priceEstimate}
                           </span>
                         )}
                       </div>
 
                       {item.note && (
-                        <p className="text-xs text-pink-200/90 mt-2 italic bg-black/30 p-2.5 rounded-xl border border-pink-500/20">
+                        <p className="text-xs text-slate-500 mt-2 italic bg-white/60 p-2 rounded-xl border border-slate-100">
                           💡 {item.note}
                         </p>
                       )}
@@ -531,11 +485,10 @@ export default function ClothingList({
                   </div>
                 </div>
 
-                <div className="pt-3 border-t border-pink-500/20 flex flex-wrap items-center justify-between gap-2">
+                <div className="pt-3 border-t border-slate-200/60 flex flex-wrap items-center justify-between gap-2">
                   <select
                     value={item.trialStatus}
                     onChange={(e) => {
-                      haptics.selection();
                       const nextTrial = e.target.value;
                       onUpdateClothing({
                         ...item,
@@ -544,53 +497,49 @@ export default function ClothingList({
                         updatedAt: new Date().toISOString()
                       });
                     }}
-                    className={`text-xs font-bold px-2.5 py-1.5 rounded-xl border transition cursor-pointer shadow-xs ${trialStyle.bg}`}
+                    className={`text-xs font-bold px-2.5 py-1.5 rounded-xl border transition cursor-pointer shadow-2xs ${trialStyle.bg}`}
                   >
-                    <option value="pending_trial" className="bg-slate-900 text-amber-200">⏳ Needs Trial Room</option>
-                    <option value="fitting_checked" className="bg-slate-900 text-sky-200">👍 Fitting Checked</option>
-                    <option value="in_cart" className="bg-slate-900 text-fuchsia-200">🛒 In Cart (To Buy)</option>
-                    <option value="purchased" className="bg-slate-900 text-emerald-200">✅ Purchased</option>
+                    <option value="pending_trial">⏳ Needs Trial Room</option>
+                    <option value="fitting_checked">👍 Fitting Checked</option>
+                    <option value="in_cart">🛒 In Cart (To Buy)</option>
+                    <option value="purchased">✅ Purchased</option>
                   </select>
 
                   <div className="flex items-center gap-2">
-                    <div className="flex items-center bg-pink-950/60 rounded-xl p-0.5 border border-pink-500/40 shadow-xs">
+                    <div className="flex items-center bg-white/90 rounded-xl p-0.5 border border-slate-200 shadow-2xs">
                       <button
                         type="button"
                         onClick={() => handleQtyChange(item, -1)}
-                        className="p-1 text-pink-200 hover:text-white hover:bg-pink-800/60 rounded-lg transition"
+                        className="p-1 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition"
                       >
                         <Minus className="w-3.5 h-3.5" />
                       </button>
-                      <span className="px-2 text-xs font-extrabold text-white min-w-8 text-center">
+                      <span className="px-2 text-xs font-extrabold text-slate-800 min-w-8 text-center">
                         {item.quantity || item.qty} {item.unit || 'pcs'}
                       </span>
                       <button
                         type="button"
                         onClick={() => handleQtyChange(item, 1)}
-                        className="p-1 text-pink-200 hover:text-white hover:bg-pink-800/60 rounded-lg transition"
+                        className="p-1 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition"
                       >
                         <Plus className="w-3.5 h-3.5" />
                       </button>
                     </div>
 
                     <button
-                      onClick={() => {
-                        haptics.click();
-                        onOpenEditModal(item);
-                      }}
-                      className="p-1.5 text-pink-300 hover:text-white hover:bg-pink-900/50 rounded-lg transition hover-wiggle"
+                      onClick={() => onOpenEditModal(item)}
+                      className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-white rounded-lg transition"
                       title="Edit Clothing Details"
                     >
                       <Edit3 className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => {
-                        haptics.warning();
                         if (window.confirm(`Delete "${item.name}" from clothing cart?`)) {
                           onDeleteClothing(item.itemId || item.id);
                         }
                       }}
-                      className="p-1.5 text-pink-400 hover:text-rose-400 hover:bg-rose-950/50 rounded-lg transition hover-wiggle"
+                      className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
                       title="Delete Item"
                     >
                       <Trash2 className="w-4 h-4" />

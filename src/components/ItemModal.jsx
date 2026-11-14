@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { X, Check, ShoppingBag, Layers, User, Hash, Tag, FileText } from 'lucide-react';
-import { haptics } from '../utils/haptics';
 
 const UNIT_OPTIONS = [
   'kg',
@@ -69,7 +68,6 @@ export default function ItemModal({
     e.preventDefault();
     if (!name.trim()) return;
 
-    haptics.success();
     const finalFloor = isAddingNewFloor && newFloorInput.trim()
       ? newFloorInput.trim()
       : floor;
@@ -101,29 +99,25 @@ export default function ItemModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fadeIn">
-      <div className="dark-glass-card bg-slate-900/95 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto border border-emerald-500/40 text-white">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-emerald-500/20 bg-slate-950/60 rounded-t-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-md animate-fadeIn">
+      <div className="glass-panel bg-white/95 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto border border-white/80">
+        <div className="flex items-center justify-between p-4 border-b border-slate-100 bg-slate-50/70 rounded-t-2xl">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-emerald-500/20 text-emerald-300 rounded-xl border border-emerald-500/40">
-              <ShoppingBag className="w-5 h-5 text-emerald-400" />
+            <div className="p-2 bg-emerald-100 text-emerald-800 rounded-xl">
+              <ShoppingBag className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-extrabold text-white">
+              <h2 className="text-lg font-extrabold text-slate-800">
                 {itemToEdit ? 'Edit Grocery Item' : 'Add Item to SmartCart'}
               </h2>
-              <p className="text-xs text-emerald-200/70 font-medium">
+              <p className="text-xs text-slate-500 font-medium">
                 Enter quantity, unit, size specifications, and physical zone
               </p>
             </div>
           </div>
           <button
-            onClick={() => {
-              haptics.tick();
-              onClose();
-            }}
-            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition"
+            onClick={onClose}
+            className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-200/60 transition"
           >
             <X className="w-5 h-5" />
           </button>
@@ -132,7 +126,7 @@ export default function ItemModal({
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           {/* Item Name */}
           <div>
-            <label className="block text-xs font-bold text-emerald-300 uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
               Item Name *
             </label>
             <input
@@ -141,7 +135,7 @@ export default function ItemModal({
               placeholder="e.g. Sona Masoori Rice, Red Label Tea, Vim Liquid..."
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="dark-glass-input w-full px-3.5 py-2.5 rounded-xl text-sm font-semibold focus:outline-none"
+              className="glass-input w-full px-3.5 py-2.5 rounded-xl text-sm font-semibold focus:outline-none"
               autoFocus
             />
           </div>
@@ -149,8 +143,8 @@ export default function ItemModal({
           {/* Qty, Unit, SizeSpec Row */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label className="block text-xs font-bold text-emerald-300 uppercase tracking-wider mb-1 flex items-center gap-1">
-                <Hash className="w-3.5 h-3.5 text-emerald-400" />
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1 flex items-center gap-1">
+                <Hash className="w-3.5 h-3.5 text-slate-400" />
                 <span>Quantity</span>
               </label>
               <input
@@ -160,22 +154,22 @@ export default function ItemModal({
                 placeholder="25"
                 value={qty}
                 onChange={(e) => setQty(e.target.value)}
-                className="dark-glass-input w-full px-3 py-2 rounded-xl text-sm font-bold focus:outline-none text-center"
+                className="glass-input w-full px-3 py-2 rounded-xl text-sm font-bold focus:outline-none text-center"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-emerald-300 uppercase tracking-wider mb-1 flex items-center gap-1">
-                <Tag className="w-3.5 h-3.5 text-emerald-400" />
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1 flex items-center gap-1">
+                <Tag className="w-3.5 h-3.5 text-slate-400" />
                 <span>Unit</span>
               </label>
               <select
                 value={unit}
                 onChange={(e) => setUnit(e.target.value)}
-                className="dark-glass-input w-full px-3 py-2 rounded-xl text-sm font-semibold focus:outline-none"
+                className="glass-input w-full px-3 py-2 rounded-xl text-sm font-semibold focus:outline-none bg-white"
               >
                 {UNIT_OPTIONS.map((opt) => (
-                  <option key={opt} value={opt} className="bg-slate-900 text-white">
+                  <option key={opt} value={opt}>
                     {opt}
                   </option>
                 ))}
@@ -183,7 +177,7 @@ export default function ItemModal({
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-emerald-300 uppercase tracking-wider mb-1">
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
                 Size / Specs
               </label>
               <input
@@ -191,7 +185,7 @@ export default function ItemModal({
                 placeholder="e.g. 25 kgs bag, 1L"
                 value={sizeSpec}
                 onChange={(e) => setSizeSpec(e.target.value)}
-                className="dark-glass-input w-full px-3 py-2 rounded-xl text-sm focus:outline-none"
+                className="glass-input w-full px-3 py-2 rounded-xl text-sm focus:outline-none"
               />
             </div>
           </div>
@@ -199,17 +193,14 @@ export default function ItemModal({
           {/* Floor / Department Selection */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs font-bold text-emerald-300 uppercase tracking-wider flex items-center gap-1">
-                <Layers className="w-3.5 h-3.5 text-emerald-400" />
+              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1">
+                <Layers className="w-3.5 h-3.5 text-slate-400" />
                 <span>Floor / Physical Zone</span>
               </label>
               <button
                 type="button"
-                onClick={() => {
-                  haptics.tick();
-                  setIsAddingNewFloor(!isAddingNewFloor);
-                }}
-                className="text-xs text-emerald-400 hover:text-emerald-300 font-bold"
+                onClick={() => setIsAddingNewFloor(!isAddingNewFloor)}
+                className="text-xs text-emerald-600 hover:text-emerald-700 font-bold"
               >
                 {isAddingNewFloor ? 'Select Existing' : '+ Add New Floor'}
               </button>
@@ -221,16 +212,16 @@ export default function ItemModal({
                 placeholder="e.g. 3rd Floor - Clothing / Electronics"
                 value={newFloorInput}
                 onChange={(e) => setNewFloorInput(e.target.value)}
-                className="dark-glass-input w-full px-3 py-2 rounded-xl border-emerald-400 text-sm font-medium focus:outline-none"
+                className="glass-input w-full px-3 py-2 rounded-xl border-emerald-400 text-sm font-medium focus:outline-none"
               />
             ) : (
               <select
                 value={floor}
                 onChange={(e) => setFloor(e.target.value)}
-                className="dark-glass-input w-full px-3 py-2 rounded-xl text-sm font-semibold focus:outline-none"
+                className="glass-input w-full px-3 py-2 rounded-xl text-sm font-semibold focus:outline-none bg-white"
               >
                 {existingFloors.map((f) => (
-                  <option key={f} value={f} className="bg-slate-900 text-white">
+                  <option key={f} value={f}>
                     {f}
                   </option>
                 ))}
@@ -240,18 +231,18 @@ export default function ItemModal({
 
           {/* Assignee Selection */}
           <div>
-            <label className="block text-xs font-bold text-emerald-300 uppercase tracking-wider mb-1 flex items-center gap-1">
-              <User className="w-3.5 h-3.5 text-emerald-400" />
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1 flex items-center gap-1">
+              <User className="w-3.5 h-3.5 text-slate-400" />
               <span>Assignee (Delegated Person)</span>
             </label>
             <select
               value={assignee}
               onChange={(e) => setAssignee(e.target.value)}
-              className="dark-glass-input w-full px-3 py-2 rounded-xl text-sm font-semibold focus:outline-none"
+              className="glass-input w-full px-3 py-2 rounded-xl text-sm font-semibold focus:outline-none bg-white"
             >
-              <option value="Unassigned" className="bg-slate-900 text-white">-- Unassigned (Anyone can pick) --</option>
+              <option value="Unassigned">-- Unassigned (Anyone can pick) --</option>
               {teamMembers.map((member) => (
-                <option key={member} value={member} className="bg-slate-900 text-white">
+                <option key={member} value={member}>
                   👤 {member}
                 </option>
               ))}
@@ -260,8 +251,8 @@ export default function ItemModal({
 
           {/* Notes / Special Instructions */}
           <div>
-            <label className="block text-xs font-bold text-emerald-300 uppercase tracking-wider mb-1 flex items-center gap-1">
-              <FileText className="w-3.5 h-3.5 text-emerald-400" />
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1 flex items-center gap-1">
+              <FileText className="w-3.5 h-3.5 text-slate-400" />
               <span>Notes / Special Instructions</span>
             </label>
             <textarea
@@ -269,64 +260,55 @@ export default function ItemModal({
               placeholder="e.g. Prefer Nandini cow ghee, check best before date, carton deal..."
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              className="dark-glass-input w-full px-3 py-2 rounded-xl text-sm focus:outline-none resize-none"
+              className="glass-input w-full px-3 py-2 rounded-xl text-sm focus:outline-none resize-none"
             />
           </div>
 
           {/* Status Selection */}
           {itemToEdit && (
             <div className="flex items-center gap-3 pt-1">
-              <label className="text-xs font-bold text-emerald-300 uppercase tracking-wider">
+              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                 Status:
               </label>
               <div className="flex items-center gap-4 text-sm font-semibold">
-                <label className="flex items-center gap-1.5 cursor-pointer text-slate-300">
+                <label className="flex items-center gap-1.5 cursor-pointer">
                   <input
                     type="radio"
                     name="status"
                     value="pending"
                     checked={status === 'pending'}
-                    onChange={() => {
-                      haptics.tick();
-                      setStatus('pending');
-                    }}
-                    className="text-emerald-500 focus:ring-emerald-500"
+                    onChange={() => setStatus('pending')}
+                    className="text-emerald-600 focus:ring-emerald-500"
                   />
                   <span>Pending</span>
                 </label>
-                <label className="flex items-center gap-1.5 cursor-pointer text-emerald-300">
+                <label className="flex items-center gap-1.5 cursor-pointer">
                   <input
                     type="radio"
                     name="status"
                     value="completed"
                     checked={status === 'completed'}
-                    onChange={() => {
-                      haptics.success();
-                      setStatus('completed');
-                    }}
-                    className="text-emerald-500 focus:ring-emerald-500"
+                    onChange={() => setStatus('completed')}
+                    className="text-emerald-600 focus:ring-emerald-500"
                   />
-                  <span className="text-emerald-300 font-bold">Purchased (Struck)</span>
+                  <span className="text-emerald-700">Purchased (Struck)</span>
                 </label>
               </div>
             </div>
           )}
 
           {/* Modal Actions */}
-          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-emerald-500/20">
+          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100">
             <button
               type="button"
-              onClick={() => {
-                haptics.tick();
-                onClose();
-              }}
-              className="px-4 py-2 text-sm font-bold text-slate-300 hover:text-white hover:bg-slate-800 rounded-xl transition"
+              onClick={onClose}
+              className="px-4 py-2 text-sm font-bold text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex items-center gap-1.5 px-5 py-2 text-sm font-bold text-white bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 rounded-xl shadow-lg shadow-emerald-900/40 transition hover-wiggle"
+              className="flex items-center gap-1.5 px-5 py-2 text-sm font-bold text-white bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 rounded-xl shadow-md shadow-emerald-600/20 transition"
             >
               <Check className="w-4 h-4" />
               <span>{itemToEdit ? 'Save Changes' : 'Add Item'}</span>
