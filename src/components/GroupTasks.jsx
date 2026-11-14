@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { 
   Users, Plus, CheckCircle, Clock, AlertTriangle, ArrowRight, 
   Trash2, Edit3, UserCheck, Calendar, Filter, Sparkles, Tag,
@@ -19,7 +19,102 @@ const STATUS_CONFIG = {
   completed: { label: 'Completed ✅', bg: 'bg-emerald-950/80 text-emerald-300 border border-emerald-500/40' }
 };
 
-export default function GroupTasks({
+// ⚡ Memoized Task Card for Smooth 120 FPS Rendering
+const TaskCard = React.memo(function TaskCard({
+  task,
+  onUpdateStatus,
+  onEdit,
+  onDelete
+}) {
+  const isDone = task.status === 'completed';
+  const priorityStyle = PRIORITY_CONFIG[task.priority] || PRIORITY_CONFIG.medium;
+  const statusStyle = STATUS_CONFIG[task.status] || STATUS_CONFIG.pending;
+
+  return (
+    <div
+      className={`virtual-item-row glass-card rounded-2xl p-4 sm:p-5 transition-colors ${
+        isDone
+          ? 'opacity-60 bg-slate-950/40'
+          : 'border-white/10'
+      }`}
+    >
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+        <div className="space-y-2 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className={`text-[11px] font-extrabold px-2.5 py-0.5 rounded-lg border ${priorityStyle.bg}`}>
+              {priorityStyle.label}
+            </span>
+            <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-lg ${statusStyle.bg}`}>
+              {statusStyle.label}
+            </span>
+            {task.category && (
+              <span className="spec-tag text-[11px]">
+                {task.category}
+              </span>
+            )}
+          </div>
+
+          <h3 className={`item-title ${
+            isDone ? 'line-through text-slate-500' : 'text-slate-50'
+          }`}>
+            {task.title}
+          </h3>
+
+          {task.notes && (
+            <p className="text-xs text-slate-300 bg-black/20 p-2.5 rounded-xl border border-white/5 whitespace-pre-wrap font-normal">
+              💬 {task.notes}
+            </p>
+          )}
+
+          <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400 pt-1">
+            <div className="flex items-center gap-1.5 font-bold text-indigo-300 bg-indigo-950/70 px-2.5 py-1 rounded-xl border border-indigo-500/30">
+              <Users className="w-3.5 h-3.5 text-indigo-400" />
+              <span>Assigned to: {task.assignedTo || 'Unassigned'}</span>
+            </div>
+
+            {task.dueDate && (
+              <div className="flex items-center gap-1 font-semibold text-slate-400">
+                <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                <span>Due: {task.dueDate}</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2 pt-3 sm:pt-0 border-t sm:border-0 border-white/10 shrink-0">
+          <select
+            value={task.status}
+            onChange={(e) => onUpdateStatus(task, e.target.value)}
+            className="glass-input text-xs font-bold px-3 py-1.5 rounded-xl focus:outline-none cursor-pointer"
+          >
+            <option value="pending" className="bg-slate-900 text-slate-100">To Do</option>
+            <option value="in_progress" className="bg-slate-900 text-blue-300">In Progress</option>
+            <option value="follow_up" className="bg-slate-900 text-amber-300">Follow Up</option>
+            <option value="completed" className="bg-slate-900 text-emerald-300">Completed ✅</option>
+          </select>
+
+          <button
+            onClick={() => onEdit(task)}
+            className="p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition"
+            title="Edit Task"
+          >
+            <Edit3 className="w-4 h-4" />
+          </button>
+
+          <button
+            onClick={() => onDelete(task.id, task.title)}
+            className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-950/40 rounded-lg transition"
+            title="Delete Task"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+function GroupTasks({
   tasks,
   onAddTask,
   onUpdateTask,
@@ -93,6 +188,20 @@ export default function GroupTasks({
     setIsModalOpen(false);
   };
 
+  const handleUpdateStatus = useCallback((task, newStatus) => {
+    onUpdateTask({
+      ...task,
+      status: newStatus,
+      updatedAt: new Date().toISOString()
+    });
+  }, [onUpdateTask]);
+
+  const handleDelete = useCallback((id, taskTitle) => {
+    if (window.confirm(`Delete task "${taskTitle}"?`)) {
+      onDeleteTask(id);
+    }
+  }, [onDeleteTask]);
+
   // Add member
   const handleAddNewMember = (e) => {
     e.preventDefault();
@@ -129,7 +238,7 @@ export default function GroupTasks({
   }, [tasks]);
 
   return (
-    <div className="space-y-4 pb-16">
+    <div className="space-y-4 pb-16 animate-fadeIn">
       {/* Header Banner with Glassmorphism */}
       <div className="glass-card rounded-2xl p-4 sm:p-5">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -309,105 +418,15 @@ export default function GroupTasks({
         </div>
       ) : (
         <div className="space-y-3.5">
-          {filteredTasks.map((task) => {
-            const isDone = task.status === 'completed';
-            const priorityStyle = PRIORITY_CONFIG[task.priority] || PRIORITY_CONFIG.medium;
-            const statusStyle = STATUS_CONFIG[task.status] || STATUS_CONFIG.pending;
-
-            return (
-              <div
-                key={task.id}
-                className={`glass-card rounded-2xl p-4 sm:p-5 transition ${
-                  isDone
-                    ? 'opacity-60 bg-slate-950/40'
-                    : 'border-white/10'
-                }`}
-              >
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                  <div className="space-y-2 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className={`text-[11px] font-extrabold px-2.5 py-0.5 rounded-lg border ${priorityStyle.bg}`}>
-                        {priorityStyle.label}
-                      </span>
-                      <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-lg ${statusStyle.bg}`}>
-                        {statusStyle.label}
-                      </span>
-                      {task.category && (
-                        <span className="spec-tag text-[11px]">
-                          {task.category}
-                        </span>
-                      )}
-                    </div>
-
-                    <h3 className={`item-title ${
-                      isDone ? 'line-through text-slate-500' : 'text-slate-50'
-                    }`}>
-                      {task.title}
-                    </h3>
-
-                    {task.notes && (
-                      <p className="text-xs text-slate-300 bg-black/20 p-2.5 rounded-xl border border-white/5 whitespace-pre-wrap font-normal">
-                        💬 {task.notes}
-                      </p>
-                    )}
-
-                    <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400 pt-1">
-                      <div className="flex items-center gap-1.5 font-bold text-indigo-300 bg-indigo-950/70 px-2.5 py-1 rounded-xl border border-indigo-500/30">
-                        <Users className="w-3.5 h-3.5 text-indigo-400" />
-                        <span>Assigned to: {task.assignedTo || 'Unassigned'}</span>
-                      </div>
-
-                      {task.dueDate && (
-                        <div className="flex items-center gap-1 font-semibold text-slate-400">
-                          <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                          <span>Due: {task.dueDate}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2 pt-3 sm:pt-0 border-t sm:border-0 border-white/10 shrink-0">
-                    <select
-                      value={task.status}
-                      onChange={(e) => {
-                        onUpdateTask({
-                          ...task,
-                          status: e.target.value,
-                          updatedAt: new Date().toISOString()
-                        });
-                      }}
-                      className="glass-input text-xs font-bold px-3 py-1.5 rounded-xl focus:outline-none cursor-pointer"
-                    >
-                      <option value="pending" className="bg-slate-900 text-slate-100">To Do</option>
-                      <option value="in_progress" className="bg-slate-900 text-blue-300">In Progress</option>
-                      <option value="follow_up" className="bg-slate-900 text-amber-300">Follow Up</option>
-                      <option value="completed" className="bg-slate-900 text-emerald-300">Completed ✅</option>
-                    </select>
-
-                    <button
-                      onClick={() => openModal(task)}
-                      className="p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition"
-                      title="Edit Task"
-                    >
-                      <Edit3 className="w-4 h-4" />
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        if (window.confirm(`Delete task "${task.title}"?`)) {
-                          onDeleteTask(task.id);
-                        }
-                      }}
-                      className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-950/40 rounded-lg transition"
-                      title="Delete Task"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+          {filteredTasks.map((task) => (
+            <TaskCard
+              key={task.id}
+              task={task}
+              onUpdateStatus={handleUpdateStatus}
+              onEdit={openModal}
+              onDelete={handleDelete}
+            />
+          ))}
         </div>
       )}
 
@@ -569,3 +588,5 @@ export default function GroupTasks({
     </div>
   );
 }
+
+export default React.memo(GroupTasks);

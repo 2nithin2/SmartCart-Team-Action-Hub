@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback, useDeferredValue } from 'react';
 import { 
   Plus, Search, Check, Square, CheckSquare, Edit3, Trash2, 
   Layers, User, Sparkles, Minus, ShoppingBag, Copy, CheckCheck,
@@ -21,7 +21,184 @@ const UNIT_OPTIONS = [
   'dozen'
 ];
 
-export default function DmartList({
+// Helper to extract schema properties cleanly
+const getItemProp = (item) => ({
+  id: item.itemId || item.id,
+  name: item.name || '',
+  category: item.category || 'General',
+  floor: item.floor || '1st Floor',
+  quantity: item.quantity !== undefined ? item.quantity : (item.qty !== undefined ? item.qty : 1),
+  unit: item.unit || 'pcs',
+  sizeSpec: item.sizeSpec || item.size || '',
+  note: item.note !== undefined ? item.note : (item.notes || ''),
+  assignee: item.assignee !== undefined ? item.assignee : (item.assignedTo || ''),
+  status: item.status || 'pending'
+});
+
+// Assignee avatar badge color generator with crisp initial letters
+const getAvatarColor = (name) => {
+  const colors = [
+    'bg-indigo-600 text-white border-indigo-400/40',
+    'bg-pink-600 text-white border-pink-400/40',
+    'bg-emerald-600 text-white border-emerald-400/40',
+    'bg-purple-600 text-white border-purple-400/40',
+    'bg-amber-600 text-white border-amber-400/40',
+    'bg-cyan-600 text-white border-cyan-400/40'
+  ];
+  if (!name || name === 'Unassigned') return 'bg-slate-700 text-slate-300 border-slate-600/40';
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return colors[Math.abs(hash) % colors.length];
+};
+
+// ⚡ Memoized Item Row for 120 FPS Fluid Scrolling & Zero Unnecessary Re-renders
+const DmartItemRow = React.memo(function DmartItemRow({
+  rawItem,
+  onToggle,
+  onQtyChange,
+  onUpdateAssignee,
+  onEdit,
+  onDelete,
+  teamMembers
+}) {
+  const item = getItemProp(rawItem);
+  const isDone = item.status === 'completed';
+
+  return (
+    <div
+      className={`virtual-item-row p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors ${
+        isDone
+          ? 'bg-slate-950/40 opacity-60'
+          : 'hover:bg-white/5'
+      }`}
+    >
+      {/* Left: Checkbox & Item Spec details */}
+      <div className="flex items-start gap-3 flex-1 min-w-0">
+        <button
+          onClick={() => onToggle(rawItem)}
+          className={`mt-0.5 p-1 rounded-lg transition shrink-0 ${
+            isDone
+              ? 'text-emerald-400 bg-emerald-950/70 border border-emerald-500/30'
+              : 'text-slate-400 hover:text-emerald-400 bg-white/5 hover:bg-white/10 border border-white/10'
+          }`}
+          title={isDone ? 'Mark as Pending' : 'Mark as Purchased'}
+        >
+          {isDone ? (
+            <CheckSquare className="w-5 h-5 text-emerald-400" />
+          ) : (
+            <Square className="w-5 h-5" />
+          )}
+        </button>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span
+              onClick={() => onToggle(rawItem)}
+              className={`item-title cursor-pointer select-none transition ${
+                isDone
+                  ? 'line-through text-slate-500'
+                  : 'text-slate-50 hover:text-emerald-300'
+              }`}
+            >
+              {item.name}
+            </span>
+
+            {/* Category Pill */}
+            {item.category && (
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-white/5 text-slate-400 border border-white/5">
+                {item.category}
+              </span>
+            )}
+          </div>
+
+          {/* Notes / Special specs */}
+          {item.note && (
+            <p className="text-xs text-slate-400 mt-1 italic font-normal">
+              💡 {item.note}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Right: Stepper, Qty & Unit, SizeSpec, Assignee, Actions */}
+      <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-0 border-white/5">
+        {/* Qty Stepper */}
+        <div className="flex items-center bg-slate-900/60 rounded-xl p-0.5 border border-white/10 shadow-xs">
+          <button
+            type="button"
+            onClick={() => onQtyChange(rawItem, -1)}
+            disabled={isDone}
+            className="p-1 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition disabled:opacity-30"
+            title="Decrease quantity"
+          >
+            <Minus className="w-3.5 h-3.5" />
+          </button>
+          <span className="px-2 text-xs font-extrabold text-slate-100 min-w-8 text-center">
+            {item.quantity}
+          </span>
+          <button
+            type="button"
+            onClick={() => onQtyChange(rawItem, 1)}
+            disabled={isDone}
+            className="p-1 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition disabled:opacity-30"
+            title="Increase quantity"
+          >
+            <Plus className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* Unit / Pieces Badge */}
+        <span className="spec-tag text-emerald-300 font-bold border-emerald-500/20">
+          {item.unit}
+        </span>
+
+        {/* Size / Specs Tag */}
+        {item.sizeSpec ? (
+          <span className="spec-tag max-w-xs truncate" title={item.sizeSpec}>
+            📏 {item.sizeSpec}
+          </span>
+        ) : null}
+
+        {/* Assignee Avatar Badge */}
+        <div className="relative">
+          <select
+            value={item.assignee || 'Unassigned'}
+            onChange={(e) => onUpdateAssignee(rawItem, e.target.value)}
+            className="glass-input text-xs font-semibold px-2.5 py-1 rounded-xl appearance-none pr-6 cursor-pointer"
+          >
+            <option value="Unassigned" className="bg-slate-900 text-slate-200">👤 Unassigned</option>
+            {teamMembers.map((m) => (
+              <option key={m} value={m} className="bg-slate-900 text-slate-200">👤 {m}</option>
+            ))}
+          </select>
+          <div className="pointer-events-none absolute right-2 top-1.5 text-slate-400 text-[10px]">
+            ▼
+          </div>
+        </div>
+
+        {/* Actions: Edit & Delete */}
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => onEdit(rawItem)}
+            className="p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition"
+            title="Edit Item Details"
+          >
+            <Edit3 className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => onDelete(item.id, item.name)}
+            className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-950/40 rounded-lg transition"
+            title="Delete Item"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+function DmartList({
   items,
   onUpdateItem,
   onDeleteItem,
@@ -32,6 +209,7 @@ export default function DmartList({
   existingFloors
 }) {
   const [search, setSearch] = useState('');
+  const deferredSearch = useDeferredValue(search);
   const [selectedFloor, setSelectedFloor] = useState('All');
   const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'pending' | 'completed'
   const [assignedFilter, setAssignedFilter] = useState('all');
@@ -45,28 +223,14 @@ export default function DmartList({
   const [quickAssignee, setQuickAssignee] = useState('');
   const [copiedNotification, setCopiedNotification] = useState(false);
 
-  // Helper to extract schema properties cleanly
-  const getItemProp = (item) => ({
-    id: item.itemId || item.id,
-    name: item.name || '',
-    category: item.category || 'General',
-    floor: item.floor || '1st Floor',
-    quantity: item.quantity !== undefined ? item.quantity : (item.qty !== undefined ? item.qty : 1),
-    unit: item.unit || 'pcs',
-    sizeSpec: item.sizeSpec || item.size || '',
-    note: item.note !== undefined ? item.note : (item.notes || ''),
-    assignee: item.assignee !== undefined ? item.assignee : (item.assignedTo || ''),
-    status: item.status || 'pending'
-  });
-
-  // Filtered items
+  // Filtered items (using deferredSearch for 120 FPS typing)
   const filteredItems = useMemo(() => {
     return items.filter((rawItem) => {
       const item = getItemProp(rawItem);
 
       // Search Query
-      if (search.trim()) {
-        const query = search.toLowerCase();
+      if (deferredSearch.trim()) {
+        const query = deferredSearch.toLowerCase();
         const matchesName = item.name.toLowerCase().includes(query);
         const matchesCategory = item.category.toLowerCase().includes(query);
         const matchesSize = item.sizeSpec.toLowerCase().includes(query);
@@ -97,7 +261,7 @@ export default function DmartList({
 
       return true;
     });
-  }, [items, search, selectedFloor, statusFilter, assignedFilter]);
+  }, [items, deferredSearch, selectedFloor, statusFilter, assignedFilter]);
 
   // Group items by physical floor zone
   const itemsByFloor = useMemo(() => {
@@ -120,8 +284,8 @@ export default function DmartList({
     return { total, completed, pending, percent };
   }, [items]);
 
-  // Toggle complete / strikethrough status
-  const handleToggleComplete = (rawItem) => {
+  // Callbacks memoized with useCallback
+  const handleToggleComplete = useCallback((rawItem) => {
     const item = getItemProp(rawItem);
     const nextStatus = item.status === 'completed' ? 'pending' : 'completed';
     
@@ -136,16 +300,15 @@ export default function DmartList({
       const allOthersDone = floorItems.every((i) => i.status === 'completed');
       if (allOthersDone && floorItems.length > 0) {
         confetti({
-          particleCount: 90,
-          spread: 75,
+          particleCount: 80,
+          spread: 70,
           origin: { y: 0.6 }
         });
       }
     }
-  };
+  }, [items, onUpdateItem]);
 
-  // Quantity stepper increment/decrement
-  const handleQtyChange = (rawItem, delta) => {
+  const handleQtyChange = useCallback((rawItem, delta) => {
     const item = getItemProp(rawItem);
     const currentNum = parseFloat(item.quantity) || 1;
     const nextQty = Math.max(1, currentNum + delta);
@@ -156,7 +319,22 @@ export default function DmartList({
       qty: nextQty,
       updatedAt: new Date().toISOString()
     });
-  };
+  }, [onUpdateItem]);
+
+  const handleUpdateAssignee = useCallback((rawItem, newAssignee) => {
+    onUpdateItem({
+      ...rawItem,
+      assignee: newAssignee,
+      assignedTo: newAssignee,
+      updatedAt: new Date().toISOString()
+    });
+  }, [onUpdateItem]);
+
+  const handleDeleteItem = useCallback((id, name) => {
+    if (window.confirm(`Delete "${name}" from shopping list?`)) {
+      onDeleteItem(id);
+    }
+  }, [onDeleteItem]);
 
   // Quick-Add submission
   const handleQuickAdd = (e) => {
@@ -215,24 +393,8 @@ export default function DmartList({
     });
   };
 
-  // Assignee avatar badge color generator with crisp initial letters
-  const getAvatarColor = (name) => {
-    const colors = [
-      'bg-indigo-600 text-white border-indigo-400/40',
-      'bg-pink-600 text-white border-pink-400/40',
-      'bg-emerald-600 text-white border-emerald-400/40',
-      'bg-purple-600 text-white border-purple-400/40',
-      'bg-amber-600 text-white border-amber-400/40',
-      'bg-cyan-600 text-white border-cyan-400/40'
-    ];
-    if (!name || name === 'Unassigned') return 'bg-slate-700 text-slate-300 border-slate-600/40';
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    return colors[Math.abs(hash) % colors.length];
-  };
-
   return (
-    <div className="space-y-4 pb-16">
+    <div className="space-y-4 pb-16 animate-fadeIn">
       {/* 1. Velocity Tracker Header with Glassmorphism */}
       <div className="glass-card rounded-2xl p-4 sm:p-5">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -588,156 +750,18 @@ export default function DmartList({
 
               {/* Items in this Floor Zone */}
               <div className="divide-y divide-white/5">
-                {rawFloorItems.map((rawItem) => {
-                  const item = getItemProp(rawItem);
-                  const isDone = item.status === 'completed';
-
-                  return (
-                    <div
-                      key={item.id}
-                      className={`p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all ${
-                        isDone
-                          ? 'bg-slate-950/40 opacity-60'
-                          : 'hover:bg-white/5'
-                      }`}
-                    >
-                      {/* Left: Checkbox & Item Spec details */}
-                      <div className="flex items-start gap-3 flex-1 min-w-0">
-                        <button
-                          onClick={() => handleToggleComplete(rawItem)}
-                          className={`mt-0.5 p-1 rounded-lg transition shrink-0 ${
-                            isDone
-                              ? 'text-emerald-400 bg-emerald-950/70 border border-emerald-500/30'
-                              : 'text-slate-400 hover:text-emerald-400 bg-white/5 hover:bg-white/10 border border-white/10'
-                          }`}
-                          title={isDone ? 'Mark as Pending' : 'Mark as Purchased'}
-                        >
-                          {isDone ? (
-                            <CheckSquare className="w-5 h-5 text-emerald-400" />
-                          ) : (
-                            <Square className="w-5 h-5" />
-                          )}
-                        </button>
-
-                        <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            {/* 5. Item Title Rule */}
-                            <span
-                              onClick={() => handleToggleComplete(rawItem)}
-                              className={`item-title cursor-pointer select-none transition ${
-                                isDone
-                                  ? 'line-through text-slate-500'
-                                  : 'text-slate-50 hover:text-emerald-300'
-                              }`}
-                            >
-                              {item.name}
-                            </span>
-
-                            {/* Category Pill */}
-                            {item.category && (
-                              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-white/5 text-slate-400 border border-white/5">
-                                {item.category}
-                              </span>
-                            )}
-                          </div>
-
-                          {/* Notes / Special specs */}
-                          {item.note && (
-                            <p className="text-xs text-slate-400 mt-1 italic font-normal">
-                              💡 {item.note}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Right: Stepper, Qty & Unit, SizeSpec, Assignee, Actions */}
-                      <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-0 border-white/5">
-                        {/* Qty Stepper */}
-                        <div className="flex items-center bg-slate-900/60 rounded-xl p-0.5 border border-white/10 shadow-xs">
-                          <button
-                            type="button"
-                            onClick={() => handleQtyChange(rawItem, -1)}
-                            disabled={isDone}
-                            className="p-1 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition disabled:opacity-30"
-                            title="Decrease quantity"
-                          >
-                            <Minus className="w-3.5 h-3.5" />
-                          </button>
-                          <span className="px-2 text-xs font-extrabold text-slate-100 min-w-8 text-center">
-                            {item.quantity}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => handleQtyChange(rawItem, 1)}
-                            disabled={isDone}
-                            className="p-1 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition disabled:opacity-30"
-                            title="Increase quantity"
-                          >
-                            <Plus className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-
-                        {/* Unit / Pieces Badge */}
-                        <span className="spec-tag text-emerald-300 font-bold border-emerald-500/20">
-                          {item.unit}
-                        </span>
-
-                        {/* 5. Metadata Tags (Sizes/Specs) */}
-                        {item.sizeSpec ? (
-                          <span className="spec-tag max-w-xs truncate" title={item.sizeSpec}>
-                            📏 {item.sizeSpec}
-                          </span>
-                        ) : null}
-
-                        {/* 5. Assignee Avatar Badge */}
-                        <div className="relative">
-                          <select
-                            value={item.assignee || 'Unassigned'}
-                            onChange={(e) => {
-                              onUpdateItem({
-                                ...rawItem,
-                                assignee: e.target.value,
-                                assignedTo: e.target.value,
-                                updatedAt: new Date().toISOString()
-                              });
-                            }}
-                            className="glass-input text-xs font-semibold px-2.5 py-1 rounded-xl appearance-none pr-6 cursor-pointer"
-                          >
-                            <option value="Unassigned" className="bg-slate-900 text-slate-200">👤 Unassigned</option>
-                            {teamMembers.map((m) => (
-                              <option key={m} value={m} className="bg-slate-900 text-slate-200">👤 {m}</option>
-                            ))}
-                          </select>
-                          <div className="pointer-events-none absolute right-2 top-1.5 text-slate-400 text-[10px]">
-                            ▼
-                          </div>
-                        </div>
-
-                        {/* Actions: Edit & Delete */}
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => onOpenEditModal(rawItem)}
-                            className="p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition"
-                            title="Edit Item Details"
-                          >
-                            <Edit3 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => {
-                              if (window.confirm(`Delete "${item.name}" from shopping list?`)) {
-                                onDeleteItem(item.id);
-                              }
-                            }}
-                            className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-950/40 rounded-lg transition"
-                            title="Delete Item"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+                {rawFloorItems.map((rawItem) => (
+                  <DmartItemRow
+                    key={rawItem.itemId || rawItem.id}
+                    rawItem={rawItem}
+                    onToggle={handleToggleComplete}
+                    onQtyChange={handleQtyChange}
+                    onUpdateAssignee={handleUpdateAssignee}
+                    onEdit={onOpenEditModal}
+                    onDelete={handleDeleteItem}
+                    teamMembers={teamMembers}
+                  />
+                ))}
               </div>
             </div>
           );
@@ -746,3 +770,5 @@ export default function DmartList({
     </div>
   );
 }
+
+export default React.memo(DmartList);

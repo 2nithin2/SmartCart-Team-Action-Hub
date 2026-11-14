@@ -104,76 +104,97 @@ export default function App() {
     return { total, pending };
   }, [tasks]);
 
-  // Grocery Handlers
-  const handleAddItem = async (newItem) => {
-    const normalized = normalizeItem(newItem, items.length);
-    const updated = [normalized, ...items];
-    setItems(updated);
-    await syncSaveItems(updated);
-  };
+  // Grocery Handlers (Memoized with stable functional updates for 120 FPS performance)
+  const handleAddItem = React.useCallback(async (newItem) => {
+    setItems((prevItems) => {
+      const normalized = normalizeItem(newItem, prevItems.length);
+      const updated = [normalized, ...prevItems];
+      syncSaveItems(updated);
+      return updated;
+    });
+  }, []);
 
-  const handleUpdateItem = async (updatedItem) => {
-    const normalized = normalizeItem(updatedItem);
-    const targetId = normalized.itemId || normalized.id;
-    const updated = items.map((i) => ((i.itemId === targetId || i.id === targetId) ? normalized : i));
-    setItems(updated);
-    await syncSaveItems(updated);
-  };
+  const handleUpdateItem = React.useCallback(async (updatedItem) => {
+    setItems((prevItems) => {
+      const normalized = normalizeItem(updatedItem);
+      const targetId = normalized.itemId || normalized.id;
+      const updated = prevItems.map((i) => ((i.itemId === targetId || i.id === targetId) ? normalized : i));
+      syncSaveItems(updated);
+      return updated;
+    });
+  }, []);
 
-  const handleDeleteItem = async (itemId) => {
-    const updated = items.filter((i) => (i.itemId !== itemId && i.id !== itemId));
-    setItems(updated);
-    await syncSaveItems(updated);
-  };
+  const handleDeleteItem = React.useCallback(async (itemId) => {
+    setItems((prevItems) => {
+      const updated = prevItems.filter((i) => (i.itemId !== itemId && i.id !== itemId));
+      syncSaveItems(updated);
+      return updated;
+    });
+  }, []);
 
-  // Clothing Handlers
-  const handleAddClothing = async (newClothing) => {
-    const normalized = normalizeItem(newClothing, clothingItems.length);
-    const updated = [normalized, ...clothingItems];
-    setClothingItems(updated);
-    await syncSaveClothing(updated);
-  };
+  // Clothing Handlers (Memoized with stable functional updates)
+  const handleAddClothing = React.useCallback(async (newClothing) => {
+    setClothingItems((prevClothing) => {
+      const normalized = normalizeItem(newClothing, prevClothing.length);
+      const updated = [normalized, ...prevClothing];
+      syncSaveClothing(updated);
+      return updated;
+    });
+  }, []);
 
-  const handleUpdateClothing = async (updatedClothing) => {
-    const normalized = normalizeItem(updatedClothing);
-    const targetId = normalized.itemId || normalized.id;
-    const updated = clothingItems.map((c) => ((c.itemId === targetId || c.id === targetId) ? normalized : c));
-    setClothingItems(updated);
-    await syncSaveClothing(updated);
-  };
+  const handleUpdateClothing = React.useCallback(async (updatedClothing) => {
+    setClothingItems((prevClothing) => {
+      const normalized = normalizeItem(updatedClothing);
+      const targetId = normalized.itemId || normalized.id;
+      const updated = prevClothing.map((c) => ((c.itemId === targetId || c.id === targetId) ? normalized : c));
+      syncSaveClothing(updated);
+      return updated;
+    });
+  }, []);
 
-  const handleDeleteClothing = async (clothingId) => {
-    const updated = clothingItems.filter((c) => (c.itemId !== clothingId && c.id !== clothingId));
-    setClothingItems(updated);
-    await syncSaveClothing(updated);
-  };
+  const handleDeleteClothing = React.useCallback(async (clothingId) => {
+    setClothingItems((prevClothing) => {
+      const updated = prevClothing.filter((c) => (c.itemId !== clothingId && c.id !== clothingId));
+      syncSaveClothing(updated);
+      return updated;
+    });
+  }, []);
 
-  // Task Handlers
-  const handleAddTask = async (newTask) => {
-    const updated = [newTask, ...tasks];
-    setTasks(updated);
-    await syncSaveTasks(updated);
-  };
+  // Task Handlers (Memoized with stable functional updates)
+  const handleAddTask = React.useCallback(async (newTask) => {
+    setTasks((prevTasks) => {
+      const updated = [newTask, ...prevTasks];
+      syncSaveTasks(updated);
+      return updated;
+    });
+  }, []);
 
-  const handleUpdateTask = async (updatedTask) => {
-    const updated = tasks.map((t) => (t.id === updatedTask.id ? updatedTask : t));
-    setTasks(updated);
-    await syncSaveTasks(updated);
-  };
+  const handleUpdateTask = React.useCallback(async (updatedTask) => {
+    setTasks((prevTasks) => {
+      const updated = prevTasks.map((t) => (t.id === updatedTask.id ? updatedTask : t));
+      syncSaveTasks(updated);
+      return updated;
+    });
+  }, []);
 
-  const handleDeleteTask = async (taskId) => {
-    const updated = tasks.filter((t) => t.id !== taskId);
-    setTasks(updated);
-    await syncSaveTasks(updated);
-  };
+  const handleDeleteTask = React.useCallback(async (taskId) => {
+    setTasks((prevTasks) => {
+      const updated = prevTasks.filter((t) => t.id !== taskId);
+      syncSaveTasks(updated);
+      return updated;
+    });
+  }, []);
 
   // Member Handlers
-  const handleAddMember = async (name) => {
-    if (!name || teamMembers.includes(name)) return;
-    const updated = [...teamMembers, name];
-    setTeamMembers(updated);
-    await syncSaveMembers(updated);
-  };
+  const handleAddMember = React.useCallback(async (name) => {
+    if (!name) return;
+    setTeamMembers((prevMembers) => {
+      if (prevMembers.includes(name)) return prevMembers;
+      const updated = [...prevMembers, name];
+      syncSaveMembers(updated);
+      return updated;
+    });
+  }, []);
 
   // Reset to original defaults
   const handleResetDefaults = async () => {
