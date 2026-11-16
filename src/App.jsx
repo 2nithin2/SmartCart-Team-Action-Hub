@@ -185,14 +185,134 @@ export default function App() {
     });
   }, []);
 
-  // Member Handlers
+  // Member Handlers (Add, Edit/Rename, Remove with cascading task & item updates)
   const handleAddMember = React.useCallback(async (name) => {
-    if (!name) return;
+    const trimmed = name?.trim();
+    if (!trimmed) return;
     setTeamMembers((prevMembers) => {
-      if (prevMembers.includes(name)) return prevMembers;
-      const updated = [...prevMembers, name];
+      if (prevMembers.some((m) => m.toLowerCase() === trimmed.toLowerCase())) {
+        alert(`Member "${trimmed}" already exists.`);
+        return prevMembers;
+      }
+      const updated = [...prevMembers, trimmed];
       syncSaveMembers(updated);
       return updated;
+    });
+  }, []);
+
+  const handleEditMember = React.useCallback(async (oldName, newName) => {
+    const trimmedNew = newName?.trim();
+    if (!trimmedNew || !oldName || trimmedNew === oldName) return;
+
+    let duplicate = false;
+    setTeamMembers((prevMembers) => {
+      if (prevMembers.some((m) => m.toLowerCase() === trimmedNew.toLowerCase() && m !== oldName)) {
+        duplicate = true;
+        return prevMembers;
+      }
+      const updatedMembers = prevMembers.map((m) => (m === oldName ? trimmedNew : m));
+      syncSaveMembers(updatedMembers);
+      return updatedMembers;
+    });
+
+    if (duplicate) {
+      alert(`A member named "${trimmedNew}" already exists.`);
+      return;
+    }
+
+    // Cascade update to tasks
+    setTasks((prevTasks) => {
+      let changed = false;
+      const updatedTasks = prevTasks.map((t) => {
+        if (t.assignedTo === oldName) {
+          changed = true;
+          return { ...t, assignedTo: trimmedNew, updatedAt: new Date().toISOString() };
+        }
+        return t;
+      });
+      if (changed) syncSaveTasks(updatedTasks);
+      return updatedTasks;
+    });
+
+    // Cascade update to DMart grocery items
+    setItems((prevItems) => {
+      let changed = false;
+      const updatedItems = prevItems.map((item) => {
+        if (item.assignee === oldName || item.assignedTo === oldName) {
+          changed = true;
+          return { ...item, assignee: trimmedNew, assignedTo: trimmedNew, updatedAt: new Date().toISOString() };
+        }
+        return item;
+      });
+      if (changed) syncSaveItems(updatedItems);
+      return updatedItems;
+    });
+
+    // Cascade update to clothing items
+    setClothingItems((prevClothing) => {
+      let changed = false;
+      const updatedClothing = prevClothing.map((item) => {
+        if (item.assignee === oldName || item.assignedTo === oldName) {
+          changed = true;
+          return { ...item, assignee: trimmedNew, assignedTo: trimmedNew, updatedAt: new Date().toISOString() };
+        }
+        return item;
+      });
+      if (changed) syncSaveClothing(updatedClothing);
+      return updatedClothing;
+    });
+  }, []);
+
+  const handleRemoveMember = React.useCallback(async (memberToRemove) => {
+    if (!memberToRemove) return;
+
+    // Remove from teamMembers
+    setTeamMembers((prevMembers) => {
+      const updatedMembers = prevMembers.filter((m) => m !== memberToRemove);
+      syncSaveMembers(updatedMembers);
+      return updatedMembers;
+    });
+
+    // Reassign tasks to 'Unassigned'
+    setTasks((prevTasks) => {
+      let changed = false;
+      const updatedTasks = prevTasks.map((t) => {
+        if (t.assignedTo === memberToRemove) {
+          changed = true;
+          return { ...t, assignedTo: 'Unassigned', updatedAt: new Date().toISOString() };
+        }
+        return t;
+      });
+      if (changed) syncSaveTasks(updatedTasks);
+      return updatedTasks;
+    });
+
+    // Reassign grocery items
+    setItems((prevItems) => {
+      let changed = false;
+      const updatedItems = prevItems.map((item) => {
+        if (item.assignee === memberToRemove || item.assignedTo === memberToRemove) {
+          changed = true;
+          return { ...item, assignee: 'Unassigned', assignedTo: 'Unassigned', updatedAt: new Date().toISOString() };
+        }
+        return item;
+      });
+      if (changed) syncSaveItems(updatedItems);
+      return updatedItems;
+    });
+
+    // Reassign clothing items
+    setClothingItems((prevClothing) => {
+      let changed = false;
+      const updatedClothing = prevClothing.map((item) => {
+        if (item.assignee === memberToRemove || item.assignedTo === memberToRemove) {
+          changed = true;
+          return { ...item, assignee: 'Unassigned', assignedTo: 'Unassigned', updatedAt: new Date().toISOString() };
+        }
+        return item;
+      });
+      if (changed) syncSaveClothing(updatedClothing);
+      return updatedClothing;
     });
   }, []);
 
@@ -401,6 +521,8 @@ export default function App() {
             onDeleteTask={handleDeleteTask}
             teamMembers={teamMembers}
             onAddMember={handleAddMember}
+            onEditMember={handleEditMember}
+            onRemoveMember={handleRemoveMember}
           />
         )}
       </main>

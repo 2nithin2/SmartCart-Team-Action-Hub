@@ -2,7 +2,8 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { 
   Users, Plus, CheckCircle, Clock, AlertTriangle, ArrowRight, 
   Trash2, Edit3, UserCheck, Calendar, Filter, Sparkles, Tag,
-  ChevronRight, MessageSquare, Check, X
+  ChevronRight, MessageSquare, Check, X, UserPlus, UserMinus,
+  Edit2, User
 } from 'lucide-react';
 
 const PRIORITY_CONFIG = {
@@ -19,16 +20,35 @@ const STATUS_CONFIG = {
   completed: { label: 'Completed ✅', bg: 'bg-emerald-950/80 text-emerald-300 border border-emerald-500/40' }
 };
 
+// Avatar generator with distinct initials and color hashing
+const getAvatarColor = (name) => {
+  const colors = [
+    'bg-indigo-600 text-white border-indigo-400/40',
+    'bg-pink-600 text-white border-pink-400/40',
+    'bg-emerald-600 text-white border-emerald-400/40',
+    'bg-purple-600 text-white border-purple-400/40',
+    'bg-amber-600 text-white border-amber-400/40',
+    'bg-cyan-600 text-white border-cyan-400/40'
+  ];
+  if (!name || name === 'Unassigned') return 'bg-slate-700 text-slate-300 border-slate-600/40';
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return colors[Math.abs(hash) % colors.length];
+};
+
 // ⚡ Memoized Task Card for Smooth 120 FPS Rendering
 const TaskCard = React.memo(function TaskCard({
   task,
   onUpdateStatus,
+  onUpdateAssignee,
   onEdit,
-  onDelete
+  onDelete,
+  teamMembers
 }) {
   const isDone = task.status === 'completed';
   const priorityStyle = PRIORITY_CONFIG[task.priority] || PRIORITY_CONFIG.medium;
   const statusStyle = STATUS_CONFIG[task.status] || STATUS_CONFIG.pending;
+  const assignedName = task.assignedTo || 'Unassigned';
 
   return (
     <div
@@ -66,10 +86,26 @@ const TaskCard = React.memo(function TaskCard({
             </p>
           )}
 
-          <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400 pt-1">
+          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400 pt-1">
+            {/* Quick Assignee Switcher directly on the Task Card */}
             <div className="flex items-center gap-1.5 font-bold text-indigo-300 bg-indigo-950/70 px-2.5 py-1 rounded-xl border border-indigo-500/30">
-              <Users className="w-3.5 h-3.5 text-indigo-400" />
-              <span>Assigned to: {task.assignedTo || 'Unassigned'}</span>
+              <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${getAvatarColor(assignedName)}`}>
+                {assignedName ? assignedName.charAt(0).toUpperCase() : '?'}
+              </span>
+              <span className="text-slate-400 text-xs font-normal">For:</span>
+              <select
+                value={assignedName}
+                onChange={(e) => onUpdateAssignee(task, e.target.value)}
+                className="bg-transparent text-indigo-200 text-xs font-bold focus:outline-none cursor-pointer"
+                title="Change Assignee"
+              >
+                <option value="Unassigned" className="bg-slate-900 text-slate-400">👤 Unassigned</option>
+                {teamMembers.map((m) => (
+                  <option key={m} value={m} className="bg-slate-900 text-slate-100">
+                    👤 {m}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {task.dueDate && (
@@ -119,17 +155,26 @@ function GroupTasks({
   onAddTask,
   onUpdateTask,
   onDeleteTask,
-  teamMembers,
+  teamMembers = [],
   onAddMember,
+  onEditMember,
   onRemoveMember
 }) {
   const [selectedAssignee, setSelectedAssignee] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
+  
+  // Banner quick add
   const [newMemberName, setNewMemberName] = useState('');
   const [isAddingMember, setIsAddingMember] = useState(false);
 
-  // New task form state
+  // Manage Team Modal state
+  const [isManageTeamOpen, setIsManageTeamOpen] = useState(false);
+  const [modalNewMember, setModalNewMember] = useState('');
+  const [editingMember, setEditingMember] = useState(null); // oldName
+  const [editingMemberName, setEditingMemberName] = useState(''); // text input
+
+  // Task form modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [title, setTitle] = useState('');
@@ -140,12 +185,16 @@ function GroupTasks({
   const [category, setCategory] = useState('Shopping Follow-up');
   const [notes, setNotes] = useState('');
 
-  // Open modal for new or edit
+  // Quick add user inside task modal
+  const [isAddingMemberInModal, setIsAddingMemberInModal] = useState(false);
+  const [newMemberInModal, setNewMemberInModal] = useState('');
+
+  // Open task modal
   const openModal = (task = null) => {
     if (task) {
       setEditingTask(task);
       setTitle(task.title || '');
-      setAssignedTo(task.assignedTo || '');
+      setAssignedTo(task.assignedTo || 'Unassigned');
       setPriority(task.priority || 'medium');
       setStatus(task.status || 'pending');
       setDueDate(task.dueDate || '');
@@ -161,6 +210,8 @@ function GroupTasks({
       setCategory('Shopping Follow-up');
       setNotes('');
     }
+    setIsAddingMemberInModal(false);
+    setNewMemberInModal('');
     setIsModalOpen(true);
   };
 
@@ -196,19 +247,84 @@ function GroupTasks({
     });
   }, [onUpdateTask]);
 
+  const handleUpdateAssignee = useCallback((task, newAssignee) => {
+    onUpdateTask({
+      ...task,
+      assignedTo: newAssignee,
+      updatedAt: new Date().toISOString()
+    });
+  }, [onUpdateTask]);
+
   const handleDelete = useCallback((id, taskTitle) => {
     if (window.confirm(`Delete task "${taskTitle}"?`)) {
       onDeleteTask(id);
     }
   }, [onDeleteTask]);
 
-  // Add member
+  // Member Operations
   const handleAddNewMember = (e) => {
     e.preventDefault();
-    if (!newMemberName.trim()) return;
-    onAddMember(newMemberName.trim());
+    const trimmed = newMemberName.trim();
+    if (!trimmed) return;
+    onAddMember(trimmed);
     setNewMemberName('');
     setIsAddingMember(false);
+  };
+
+  const handleAddMemberFromModal = (e) => {
+    e.preventDefault();
+    const trimmed = modalNewMember.trim();
+    if (!trimmed) return;
+    onAddMember(trimmed);
+    setModalNewMember('');
+  };
+
+  const handleQuickAddInTaskModal = () => {
+    const trimmed = newMemberInModal.trim();
+    if (!trimmed) return;
+    onAddMember(trimmed);
+    setAssignedTo(trimmed);
+    setNewMemberInModal('');
+    setIsAddingMemberInModal(false);
+  };
+
+  const handleStartEditMember = (member) => {
+    setEditingMember(member);
+    setEditingMemberName(member);
+  };
+
+  const handleSaveEditMember = (oldName) => {
+    const trimmed = editingMemberName.trim();
+    if (!trimmed || trimmed === oldName) {
+      setEditingMember(null);
+      return;
+    }
+    if (onEditMember) {
+      onEditMember(oldName, trimmed);
+    }
+    if (selectedAssignee === oldName) {
+      setSelectedAssignee(trimmed);
+    }
+    setEditingMember(null);
+  };
+
+  const handleRemoveMemberPrompt = (member) => {
+    const assignedTasksCount = tasks.filter((t) => t.assignedTo === member).length;
+    const confirmMsg = assignedTasksCount > 0
+      ? `Remove "${member}" from team? ${assignedTasksCount} task(s) currently assigned to ${member} will be changed to "Unassigned".`
+      : `Remove "${member}" from team?`;
+
+    if (window.confirm(confirmMsg)) {
+      if (onRemoveMember) {
+        onRemoveMember(member);
+      }
+      if (selectedAssignee === member) {
+        setSelectedAssignee('all');
+      }
+      if (editingMember === member) {
+        setEditingMember(null);
+      }
+    }
   };
 
   // Filtered tasks
@@ -251,18 +367,32 @@ function GroupTasks({
                 Group Action &amp; Task Delegator
               </h2>
               <p className="text-xs text-slate-400 font-medium mt-0.5">
-                Delegate shopping follow-ups, price verifications &amp; trial checks to people by name
+                Delegate shopping follow-ups, price checks &amp; billing tasks to team members by name
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 self-stretch sm:self-auto">
+          <div className="flex items-center gap-2 self-stretch sm:self-auto flex-wrap">
+            {/* Manage Users & Collaborators Button */}
+            <button
+              onClick={() => setIsManageTeamOpen(true)}
+              className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-indigo-300 bg-indigo-950/60 hover:bg-indigo-900/60 border border-indigo-500/30 rounded-xl shadow-xs transition"
+              title="Add, edit, or remove team members"
+            >
+              <Users className="w-3.5 h-3.5 text-indigo-400" />
+              <span>Manage Users ({teamMembers.length})</span>
+            </button>
+
+            {/* Quick Add Member Toggle */}
             <button
               onClick={() => setIsAddingMember(!isAddingMember)}
-              className="px-3.5 py-2 text-xs font-bold text-slate-200 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl shadow-xs transition"
+              className="flex items-center gap-1 px-3 py-2 text-xs font-bold text-slate-200 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl shadow-xs transition"
             >
-              + Add Member Name
+              <UserPlus className="w-3.5 h-3.5 text-slate-300" />
+              <span>+ Add User</span>
             </button>
+
+            {/* Assign New Task Button */}
             <button
               onClick={() => openModal()}
               className="flex items-center gap-1.5 px-4 py-2 text-xs sm:text-sm font-bold text-white bg-linear-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 rounded-xl shadow-lg glow-indigo transition"
@@ -273,10 +403,13 @@ function GroupTasks({
           </div>
         </div>
 
-        {/* Add Member inline form */}
+        {/* Add Member inline banner form */}
         {isAddingMember && (
-          <form onSubmit={handleAddNewMember} className="mt-3.5 p-3.5 bg-slate-900/60 rounded-2xl border border-indigo-500/30 flex items-center gap-2.5">
-            <span className="text-xs font-extrabold text-indigo-300">Add Collaborator:</span>
+          <form onSubmit={handleAddNewMember} className="mt-3.5 p-3.5 bg-slate-900/70 rounded-2xl border border-indigo-500/30 flex items-center gap-2.5 animate-fadeIn">
+            <span className="text-xs font-extrabold text-indigo-300 flex items-center gap-1">
+              <UserPlus className="w-3.5 h-3.5" />
+              <span>Add Collaborator:</span>
+            </span>
             <input
               type="text"
               placeholder="e.g. Nithin, Ramesh, Divya..."
@@ -289,7 +422,7 @@ function GroupTasks({
               type="submit"
               className="px-4 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition shadow-xs"
             >
-              Add
+              Add User
             </button>
             <button
               type="button"
@@ -301,11 +434,21 @@ function GroupTasks({
           </form>
         )}
 
-        {/* Team Member Filter Chips */}
+        {/* Team Member Filter Chips with Quick Edit & Remove */}
         <div className="mt-4 pt-3.5 border-t border-white/10">
-          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-            Filter by Assignee:
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+              Filter Tasks by Assignee:
+            </span>
+            <button
+              onClick={() => setIsManageTeamOpen(true)}
+              className="text-[11px] text-indigo-400 hover:text-indigo-300 font-bold flex items-center gap-1 transition"
+            >
+              <span>Edit / Remove Users</span>
+              <ChevronRight className="w-3 h-3" />
+            </button>
           </div>
+
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => setSelectedAssignee('all')}
@@ -321,23 +464,58 @@ function GroupTasks({
             {teamMembers.map((member) => {
               const memberTasks = tasks.filter((t) => t.assignedTo === member);
               const pendingCount = memberTasks.filter((t) => t.status !== 'completed').length;
+              const isSelected = selectedAssignee === member;
+
               return (
-                <button
+                <div
                   key={member}
-                  onClick={() => setSelectedAssignee(member)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
-                    selectedAssignee === member
-                      ? 'bg-indigo-600 text-white shadow-md glow-indigo border border-indigo-400/40'
-                      : 'bg-white/5 text-slate-300 hover:bg-white/10 border border-white/10'
+                  className={`group inline-flex items-center rounded-xl text-xs font-bold transition shadow-xs border ${
+                    isSelected
+                      ? 'bg-indigo-600 text-white shadow-md glow-indigo border-indigo-400/50'
+                      : 'bg-white/5 text-slate-300 hover:bg-white/10 border-white/10'
                   }`}
                 >
-                  <span>👤 {member}</span>
-                  <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${
-                    selectedAssignee === member ? 'bg-indigo-800 text-white' : 'bg-white/10 text-slate-400'
-                  }`}>
-                    {pendingCount} open
-                  </span>
-                </button>
+                  <button
+                    onClick={() => setSelectedAssignee(member)}
+                    className="px-3 py-1.5 flex items-center gap-1.5"
+                    title={`Filter tasks for ${member}`}
+                  >
+                    <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-extrabold ${getAvatarColor(member)}`}>
+                      {member.charAt(0).toUpperCase()}
+                    </span>
+                    <span>{member}</span>
+                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ${
+                      isSelected ? 'bg-indigo-800 text-white' : 'bg-white/10 text-slate-400'
+                    }`}>
+                      {pendingCount} open
+                    </span>
+                  </button>
+
+                  {/* Inline quick edit & remove icons on member chip */}
+                  <div className="flex items-center pr-1.5 pl-0.5 opacity-60 group-hover:opacity-100 transition">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsManageTeamOpen(true);
+                        handleStartEditMember(member);
+                      }}
+                      className="p-1 hover:text-amber-300 rounded transition"
+                      title={`Edit/Rename ${member}`}
+                    >
+                      <Edit2 className="w-3 h-3" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemoveMemberPrompt(member);
+                      }}
+                      className="p-1 hover:text-rose-400 rounded transition"
+                      title={`Remove ${member}`}
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
               );
             })}
           </div>
@@ -423,14 +601,181 @@ function GroupTasks({
               key={task.id}
               task={task}
               onUpdateStatus={handleUpdateStatus}
+              onUpdateAssignee={handleUpdateAssignee}
               onEdit={openModal}
               onDelete={handleDelete}
+              teamMembers={teamMembers}
             />
           ))}
         </div>
       )}
 
-      {/* Task Modal */}
+      {/* 👥 Dedicated Manage Team & Users Modal */}
+      {isManageTeamOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fadeIn">
+          <div className="glass-panel rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col border border-white/15">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-4 border-b border-white/10 bg-slate-900/70">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 bg-indigo-500/20 text-indigo-300 rounded-xl border border-indigo-500/30">
+                  <Users className="w-5 h-5 text-indigo-400" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-extrabold text-slate-50">
+                    Manage Team &amp; Assignees
+                  </h2>
+                  <p className="text-xs text-slate-400 font-medium">
+                    Add, edit (rename), or remove team members
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setIsManageTeamOpen(false);
+                  setEditingMember(null);
+                }}
+                className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-white/10 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-5 overflow-y-auto space-y-4">
+              {/* Add New User Form */}
+              <form onSubmit={handleAddMemberFromModal} className="flex items-center gap-2">
+                <input
+                  type="text"
+                  placeholder="Enter new user name..."
+                  value={modalNewMember}
+                  onChange={(e) => setModalNewMember(e.target.value)}
+                  className="glass-input px-3.5 py-2.5 rounded-xl text-sm font-semibold flex-1 focus:outline-none"
+                  autoFocus
+                />
+                <button
+                  type="submit"
+                  className="flex items-center gap-1.5 px-4 py-2.5 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl transition shadow-md glow-indigo shrink-0"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  <span>Add User</span>
+                </button>
+              </form>
+
+              {/* Members List */}
+              <div className="space-y-2 mt-2">
+                <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  Current Collaborators ({teamMembers.length})
+                </div>
+
+                {teamMembers.length === 0 ? (
+                  <div className="p-6 text-center text-slate-400 text-xs italic bg-white/5 rounded-xl border border-white/5">
+                    No team members added yet. Add someone above!
+                  </div>
+                ) : (
+                  teamMembers.map((member) => {
+                    const isEditing = editingMember === member;
+                    const assignedTasks = tasks.filter((t) => t.assignedTo === member);
+                    const openTasksCount = assignedTasks.filter((t) => t.status !== 'completed').length;
+
+                    return (
+                      <div
+                        key={member}
+                        className="flex items-center justify-between gap-3 p-3 bg-slate-900/60 rounded-xl border border-white/10 hover:border-indigo-500/30 transition"
+                      >
+                        {isEditing ? (
+                          <div className="flex items-center gap-2 flex-1">
+                            <span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-extrabold shrink-0 ${getAvatarColor(member)}`}>
+                              {member.charAt(0).toUpperCase()}
+                            </span>
+                            <input
+                              type="text"
+                              value={editingMemberName}
+                              onChange={(e) => setEditingMemberName(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleSaveEditMember(member);
+                                if (e.key === 'Escape') setEditingMember(null);
+                              }}
+                              className="glass-input px-3 py-1.5 rounded-lg text-sm font-bold flex-1 focus:outline-none border-indigo-400"
+                              autoFocus
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleSaveEditMember(member)}
+                              className="p-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition"
+                              title="Save name"
+                            >
+                              <Check className="w-4 h-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditingMember(null)}
+                              className="p-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg transition"
+                              title="Cancel"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-extrabold shrink-0 ${getAvatarColor(member)}`}>
+                                {member.charAt(0).toUpperCase()}
+                              </span>
+                              <div className="min-w-0">
+                                <div className="text-sm font-extrabold text-slate-100 truncate">
+                                  {member}
+                                </div>
+                                <div className="text-[11px] text-slate-400">
+                                  {openTasksCount} active task(s) assigned
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => handleStartEditMember(member)}
+                                className="p-2 text-slate-300 hover:text-amber-300 hover:bg-amber-950/40 rounded-lg transition border border-transparent hover:border-amber-500/30"
+                                title={`Edit name for ${member}`}
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveMemberPrompt(member)}
+                                className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-950/40 rounded-lg transition border border-transparent hover:border-rose-500/30"
+                                title={`Remove ${member}`}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-white/10 bg-slate-900/70 flex justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsManageTeamOpen(false);
+                  setEditingMember(null);
+                }}
+                className="px-5 py-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-500 rounded-xl transition shadow-md glow-indigo"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Task Create / Edit Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fadeIn">
           <div className="glass-panel rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto border border-white/15">
@@ -472,17 +817,58 @@ function GroupTasks({
                 />
               </div>
 
+              {/* Assign To User field with inline quick-add */}
               <div>
-                <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">
-                  Assign to Name *
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider">
+                    Assign to Name *
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setIsAddingMemberInModal(!isAddingMemberInModal)}
+                    className="text-xs text-indigo-400 hover:text-indigo-300 font-bold flex items-center gap-1 transition"
+                  >
+                    <UserPlus className="w-3.5 h-3.5" />
+                    <span>{isAddingMemberInModal ? 'Cancel' : '+ Add New User'}</span>
+                  </button>
+                </div>
+
+                {/* Inline Quick Add User within Task Modal */}
+                {isAddingMemberInModal && (
+                  <div className="flex items-center gap-2 mb-2.5 p-2 bg-indigo-950/60 rounded-xl border border-indigo-500/40 animate-fadeIn">
+                    <input
+                      type="text"
+                      placeholder="Enter new user name..."
+                      value={newMemberInModal}
+                      onChange={(e) => setNewMemberInModal(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleQuickAddInTaskModal();
+                        }
+                      }}
+                      className="glass-input text-xs px-2.5 py-1.5 rounded-lg flex-1 focus:outline-none"
+                      autoFocus
+                    />
+                    <button
+                      type="button"
+                      onClick={handleQuickAddInTaskModal}
+                      className="px-3 py-1.5 text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition shadow-xs flex items-center gap-1 shrink-0"
+                    >
+                      <Check className="w-3 h-3" />
+                      <span>Add &amp; Select</span>
+                    </button>
+                  </div>
+                )}
+
                 <select
                   value={assignedTo}
                   onChange={(e) => setAssignedTo(e.target.value)}
-                  className="glass-input w-full px-3 py-2 rounded-xl text-sm font-bold focus:outline-none"
+                  className="glass-input w-full px-3 py-2 rounded-xl text-sm font-bold focus:outline-none cursor-pointer"
                   required
                 >
-                  <option value="" className="bg-slate-900 text-slate-100">-- Choose Member Name --</option>
+                  <option value="" className="bg-slate-900 text-slate-400">-- Choose Member Name --</option>
+                  <option value="Unassigned" className="bg-slate-900 text-slate-400">👤 Unassigned</option>
                   {teamMembers.map((m) => (
                     <option key={m} value={m} className="bg-slate-900 text-slate-100">
                       👤 {m}
